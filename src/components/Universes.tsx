@@ -1,0 +1,87 @@
+import Link from "next/link";
+
+const universes = [
+  {
+    title: "HOMME",
+    subtitle: "Pièces brodées · Coupes contemporaines",
+    image:
+      "https://images.unsplash.com/photo-1617137968427-85924c800a22?q=80&w=1600&auto=format&fit=crop",
+    href: "/homme",
+  },
+  {
+    title: "FEMME",
+    subtitle: "Élégance moderne · Savoir-faire français",
+    image:
+      "https://images.unsplash.com/photo-1483985988355-763728e1935b?q=80&w=1600&auto=format&fit=crop",
+    href: "/femme",
+  },
+];
+
+export default function Universes() {
+  return (
+    <section className="bg-[#EFE9DC] py-20 md:py-32 px-6">
+      <div className="max-w-7xl mx-auto">
+        {/* En-tête de section */}
+        <div className="text-center mb-12 md:mb-20">
+          <p className="text-[10px] sm:text-xs tracking-[0.4em] uppercase text-[#6B6B6B] mb-4">
+            Les Collections
+          </p>
+          <h2 className="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tight text-[#1A2332] leading-[0.95]">
+            DEUX UNIVERS,
+            <br />
+            UNE MÊME EXIGENCE.
+          </h2>
+        </div>
+
+        {/* Grille des univers */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-10">
+          {universes.map((universe) => (
+            <Link
+              key={universe.title}
+              href={universe.href}
+              className="group relative aspect-[3/4] overflow-hidden block"
+            >
+              {/* Image */}
+              <div
+                className="absolute inset-0 bg-cover bg-center transition-transform duration-700 ease-out group-hover:scale-105"
+                style={{ backgroundImage: `url('${universe.image}')` }}
+                aria-hidden="true"
+              />
+
+              {/* Overlay dégradé en bas pour lisibilité */}
+              <div
+                className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent"
+                aria-hidden="true"
+              />
+
+              {/* Texte en bas */}
+              <div className="absolute bottom-0 left-0 right-0 p-8 md:p-10 text-white">
+                <h3 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight mb-2">
+                  {universe.title}
+                </h3>
+                <p className="text-xs sm:text-sm text-white/80 mb-6">
+                  {universe.subtitle}
+                </p>
+                <div className="inline-flex items-center gap-3 text-xs tracking-[0.2em] uppercase font-semibold border-b border-white pb-1 group-hover:gap-5 transition-all duration-300">
+                  Découvrir la collection
+                  <svg
+                    width="16"
+                    height="12"
+                    viewBox="0 0 16 12"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    aria-hidden="true"
+                  >
+                    <line x1="0" y1="6" x2="14" y2="6" />
+                    <polyline points="10 2 14 6 10 10" />
+                  </svg>
+                </div>
+              </div>
+            </Link>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
