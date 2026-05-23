@@ -1,7 +1,12 @@
 {
   "permissions": {
     "allow": [
-      "PowerShell(Get-ChildItem \"C:\\\\Users\\\\Ethan\\\\Documents\\\\northstone\" -ErrorAction SilentlyContinue; if \\(-not \\(Test-Path \"C:\\\\Users\\\\Ethan\\\\Documents\\\\northstone\"\\)\\) { \"Directory does not exist yet\" })"
+      "PowerShell(Get-ChildItem \"C:\\\\Users\\\\Ethan\\\\Documents\\\\northstone\" -ErrorAction SilentlyContinue; if \\(-not \\(Test-Path \"C:\\\\Users\\\\Ethan\\\\Documents\\\\northstone\"\\)\\) { \"Directory does not exist yet\" })",
+      "PowerShell(Get-ChildItem -Path \"C:\\\\Users\\\\Ethan\\\\Documents\\\\northstone\" -Recurse -Depth 3 | Where-Object { $_.PSIsContainer } | Select-Object FullName)",
+      "PowerShell(New-Item *)",
+      "PowerShell(Remove-Item *)",
+      "PowerShell(Get-NetTCPConnection *)",
+      "PowerShell(Set-Clipboard *)"
     ]
   }
 }
