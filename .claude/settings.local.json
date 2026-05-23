@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(Get-ChildItem \"C:\\\\Users\\\\Ethan\\\\Documents\\\\northstone\" -ErrorAction SilentlyContinue; if \\(-not \\(Test-Path \"C:\\\\Users\\\\Ethan\\\\Documents\\\\northstone\"\\)\\) { \"Directory does not exist yet\" })"
+    ]
+  }
+}
