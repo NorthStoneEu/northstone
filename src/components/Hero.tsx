@@ -24,7 +24,7 @@ export default function Hero() {
           Maison française · Depuis 2026
         </p>
 
-        <h1 className="text-4xl sm:text-6xl lg:text-8xl font-black tracking-tight text-white leading-[0.95]">
+        <h1 className="text-3xl sm:text-5xl lg:text-8xl font-black tracking-tight text-white leading-[0.95]">
           L'EXCELLENCE
           <br />
           EN HÉRITAGE.
