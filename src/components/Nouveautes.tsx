@@ -86,15 +86,15 @@ const products = [
 
 export default function Nouveautes() {
   return (
-    <section className="bg-[#F5F1EA] py-20 md:py-32 px-6">
+    <section className="bg-[#F5F1EA] py-12 md:py-32 px-6">
       <div className="max-w-7xl mx-auto">
         {/* En-tête de section */}
-        <div className="flex flex-col md:flex-row md:items-end md:justify-between mb-12 md:mb-16 gap-6">
+        <div className="flex flex-col md:flex-row md:items-end md:justify-between mb-8 md:mb-16 gap-4 md:gap-6">
           <div>
             <p className="text-[10px] sm:text-xs tracking-[0.4em] uppercase text-[#B8985A] mb-4">
               Nouvelle Collection
             </p>
-            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-[#1A2332] leading-[0.95]">
+            <h2 className="text-2xl sm:text-4xl lg:text-5xl font-black tracking-tight text-[#1A2332] leading-[0.95]">
               DERNIERS
               <br />
               ARRIVAGES.
@@ -123,7 +123,7 @@ export default function Nouveautes() {
         </div>
 
         {/* Grille de produits */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6 lg:gap-8">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-6 lg:gap-8">
           {products.map((product) => (
             <Link
               key={product.id}
@@ -131,7 +131,7 @@ export default function Nouveautes() {
               className="group block"
             >
               {/* Image produit */}
-              <div className="relative aspect-[3/4] w-full overflow-hidden bg-[#EFE9DC] mb-4">
+              <div className="relative aspect-[3/4] w-full overflow-hidden bg-[#EFE9DC] mb-2 sm:mb-4">
                 <div
                   className="absolute inset-0 bg-cover bg-center transition-transform duration-700 ease-out group-hover:scale-105"
                   style={{ backgroundImage: `url('${product.image}')` }}
@@ -140,7 +140,7 @@ export default function Nouveautes() {
 
                 {/* Badge "Nouveau" si applicable */}
                 {product.isNew && (
-                  <div className="absolute top-3 left-3 bg-[#1A2332] text-[#F5F1EA] px-3 py-1 text-[9px] tracking-[0.2em] uppercase font-semibold">
+                  <div className="absolute top-2 left-2 sm:top-3 sm:left-3 bg-[#1A2332] text-[#F5F1EA] px-2 py-0.5 sm:px-3 sm:py-1 text-[8px] sm:text-[9px] tracking-[0.2em] uppercase font-semibold">
                     Nouveau
                   </div>
                 )}
@@ -154,23 +154,23 @@ export default function Nouveautes() {
               </div>
 
               {/* Infos produit */}
-              <div className="flex flex-col gap-1">
-                <p className="text-[10px] tracking-[0.2em] uppercase text-[#6B6B6B]">
-                  {product.category}
-                </p>
-                <h3 className="text-sm sm:text-base font-semibold text-[#1A2332] group-hover:text-[#B8985A] transition-colors">
-                  {product.name}
-                </h3>
-                <p className="text-sm font-semibold text-[#1A2332]">
-                  {product.price}
-                </p>
+              <div className="flex flex-col gap-0.5 sm:gap-1">
+               <p className="text-[9px] sm:text-[10px] tracking-[0.2em] uppercase text-[#6B6B6B]">
+                {product.category}
+               </p>
+               <h3 className="text-xs sm:text-base font-semibold text-[#1A2332] group-hover:text-[#B8985A] transition-colors leading-tight">
+                {product.name}
+               </h3>
+               <p className="text-xs sm:text-sm font-semibold text-[#1A2332]">
+                {product.price}
+               </p>
               </div>
             </Link>
           ))}
         </div>
 
         {/* Lien "Voir tout" version mobile (en bas) */}
-        <div className="md:hidden mt-12 text-center">
+        <div className="md:hidden mt-8 text-center">
           <Link
             href="/homme"
             className="inline-flex items-center gap-3 text-xs tracking-[0.2em] uppercase font-semibold text-[#1A2332] border-b border-[#1A2332] pb-1 hover:gap-5 hover:text-[#B8985A] hover:border-[#B8985A] transition-all duration-300"

@@ -20,33 +20,33 @@ export default function Hero() {
 
       {/* Contenu centré */}
       <div className="relative z-10 flex flex-col items-center text-center px-6 max-w-4xl">
-        <p className="text-[10px] sm:text-xs tracking-[0.4em] uppercase text-white/80 mb-6">
+        <p className="text-[9px] sm:text-xs tracking-[0.4em] uppercase text-white/80 mb-4 sm:mb-6">
           Maison française · Depuis 2026
         </p>
 
-        <h1 className="text-3xl sm:text-5xl lg:text-8xl font-black tracking-tight text-white leading-[0.95]">
+        <h1 className="text-2xl sm:text-5xl lg:text-8xl font-black tracking-tight text-white leading-[0.95]">
           L'EXCELLENCE
           <br />
           EN HÉRITAGE.
         </h1>
 
-        <p className="mt-8 text-sm sm:text-base text-white/80 max-w-xl leading-relaxed">
+        <p className="mt-4 sm:mt-8 text-[11px] sm:text-base text-white/80 max-w-xl leading-relaxed">
           Vêtements brodés en éditions limitées.
           <br className="hidden sm:block" />
           Chaque pièce est une promesse de rareté et d'authenticité.
         </p>
 
         {/* Boutons CTA */}
-        <div className="mt-10 flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
+        <div className="mt-6 sm:mt-10 flex flex-col sm:flex-row gap-2 sm:gap-3 w-full sm:w-auto">
           <Link
             href="/homme"
-            className="px-8 py-4 bg-[#F5F1EA] text-[#1A2332] text-xs tracking-[0.2em] uppercase font-semibold hover:bg-[#B8985A] hover:text-white transition-colors duration-300 text-center"
+            className="px-6 sm:px-8 py-3 sm:py-4 bg-white text-[#0A0A0A] text-[10px] sm:text-xs tracking-[0.2em] uppercase font-semibold hover:bg-[#0A0A0A] hover:text-white transition-colors duration-300 text-center"
           >
             Découvrir l'homme
           </Link>
           <Link
             href="/femme"
-            className="px-8 py-4 border border-[#F5F1EA] text-[#F5F1EA] text-xs tracking-[0.2em] uppercase font-semibold hover:bg-[#F5F1EA] hover:text-[#1A2332] transition-colors duration-300 text-center"
+            className="px-6 sm:px-8 py-3 sm:py-4 border border-white text-white text-[10px] sm:text-xs tracking-[0.2em] uppercase font-semibold hover:bg-white hover:text-[#0A0A0A] transition-colors duration-300 text-center"
           >
             Découvrir la femme
           </Link>

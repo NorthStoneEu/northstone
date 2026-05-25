@@ -19,14 +19,14 @@ const universes = [
 
 export default function Universes() {
   return (
-    <section className="bg-[#EFE9DC] py-20 md:py-32 px-6">
+    <section className="bg-[#EFE9DC] py-12 md:py-32 px-6">
       <div className="max-w-7xl mx-auto">
         {/* En-tête de section */}
-        <div className="text-center mb-12 md:mb-20">
+        <div className="text-center mb-8 md:mb-20">
           <p className="text-[10px] sm:text-xs tracking-[0.4em] uppercase text-[#6B6B6B] mb-4">
             Les Collections
           </p>
-          <h2 className="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tight text-[#1A2332] leading-[0.95]">
+          <h2 className="text-2xl sm:text-5xl lg:text-6xl font-black tracking-tight text-[#1A2332] leading-[0.95]">
             DEUX UNIVERS,
             <br />
             UNE MÊME EXIGENCE.
