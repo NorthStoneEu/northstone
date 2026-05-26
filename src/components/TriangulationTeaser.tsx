@@ -39,7 +39,7 @@ const activationSteps = [
 
 export default function TriangulationTeaser() {
   return (
-    <section className="relative bg-[#0A0A0A] text-white py-16 md:py-20 px-6 overflow-hidden">
+    <section className="relative bg-[#0A0A0A] text-white py-8 md:py-14 px-4 sm:px-6 overflow-hidden">
       {/* Lueur or champagne en fond, très subtile */}
       <div
         className="absolute inset-0 pointer-events-none opacity-30"
@@ -75,26 +75,26 @@ export default function TriangulationTeaser() {
           </div>
         </FadeIn>
 
-        {/* Les 3 piliers */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-5 mb-12 md:mb-16">
+        {/* Les 3 piliers - 3 colonnes même en mobile */}
+        <div className="grid grid-cols-3 gap-2 sm:gap-4 md:gap-5 mb-12 md:mb-16">
           {pillars.map((pillar, index) => (
             <FadeIn key={pillar.number} direction="up" delay={index * 100}>
-              <div className="group relative border border-white/10 hover:border-[#B8985A]/50 transition-colors duration-500 p-6 md:p-8 h-full">
+              <div className="group relative border border-white/10 hover:border-[#B8985A]/50 transition-colors duration-500 p-3 sm:p-5 md:p-8 h-full">
                 {/* Numéro en filigrane */}
-                <div className="absolute top-4 right-5 text-5xl md:text-6xl font-black text-white/[0.04] leading-none pointer-events-none">
+                <div className="absolute top-2 right-2 sm:top-4 sm:right-5 text-2xl sm:text-4xl md:text-6xl font-black text-white/[0.04] leading-none pointer-events-none">
                   {pillar.number}
                 </div>
 
                 {/* Contenu */}
                 <div className="relative">
-                  <p className="text-[10px] tracking-[0.3em] uppercase text-[#B8985A] mb-3">
+                  <p className="text-[8px] sm:text-[10px] tracking-[0.2em] sm:tracking-[0.3em] uppercase text-[#B8985A] mb-2 sm:mb-3">
                     Pilier {pillar.number}
                   </p>
-                  <h3 className="text-xl md:text-2xl font-black tracking-tight mb-3 uppercase">
+                  <h3 className="text-sm sm:text-lg md:text-2xl font-black tracking-tight mb-2 sm:mb-3 uppercase">
                     {pillar.title}
                   </h3>
-                  <div className="w-8 h-px bg-[#B8985A] mb-3 group-hover:w-12 transition-all duration-500" />
-                  <p className="text-xs md:text-sm text-white/60 leading-relaxed">
+                  <div className="w-6 sm:w-8 h-px bg-[#B8985A] mb-2 sm:mb-3 group-hover:w-12 transition-all duration-500" />
+                  <p className="text-[10px] sm:text-xs md:text-sm text-white/60 leading-relaxed">
                     {pillar.description}
                   </p>
                 </div>

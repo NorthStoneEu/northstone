@@ -12,6 +12,8 @@
   --font-mono: var(--font-geist-mono);
   --animate-shimmer: shimmer 5s ease-in-out infinite;
   --animate-nudge: nudge 1.8s ease-in-out infinite;
+  --animate-ticker: ticker 40s linear infinite;
+  --animate-border-pulse: border-pulse 2.5s ease-in-out infinite;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -44,4 +46,38 @@ body {
   50% {
     transform: translateX(3px);
   }
+}
+
+@keyframes ticker {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+@keyframes border-pulse {
+  0%, 100% {
+    border-color: rgba(184, 152, 90, 0.3);
+    box-shadow: 0 0 0 rgba(184, 152, 90, 0);
+  }
+  50% {
+    border-color: rgba(184, 152, 90, 0.9);
+    box-shadow: 0 0 12px rgba(184, 152, 90, 0.35);
+  }
+}
+
+/* Curseur "main" sur tous les éléments cliquables */
+button,
+a,
+[role="button"],
+input[type="submit"],
+input[type="button"],
+label[for] {
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
 }

@@ -45,20 +45,20 @@ const guarantees = [
 
 export default function Reassurance() {
   return (
-    <section className="bg-[#F5F1EA] border-y border-[#1A2332]/10 py-6 md:py-8 px-6">
+    <section className="bg-[#F5F1EA] border-y border-[#1A2332]/10 py-6 md:py-8 px-3 sm:px-6">
       <div className="max-w-5xl mx-auto">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-4">
+        <div className="grid grid-cols-4 gap-2 sm:gap-4">
           {guarantees.map((item, index) => (
             <div
               key={index}
-              className="flex flex-col md:flex-row items-center md:items-start gap-2 md:gap-3 text-center md:text-left"
+              className="flex flex-col md:flex-row items-center md:items-start gap-1.5 sm:gap-2 md:gap-3 text-center md:text-left"
             >
-              <div className="text-[#B8985A] flex-shrink-0">{item.icon}</div>
+              <div className="text-[#B8985A] flex-shrink-0 scale-75 sm:scale-90 md:scale-100">{item.icon}</div>
               <div className="flex flex-col">
-                <p className="text-[12px] sm:text-[13px] font-semibold text-[#1A2332] tracking-tight leading-tight uppercase">
+                <p className="text-[8px] sm:text-[11px] md:text-[13px] font-semibold text-[#1A2332] tracking-tight leading-tight uppercase">
                   {item.title}
                 </p>
-                <p className="text-[11px] sm:text-[12px] text-[#6B6B6B] mt-0.5 leading-tight">
+                <p className="text-[7px] sm:text-[10px] md:text-[12px] text-[#6B6B6B] mt-0.5 leading-tight">
                   {item.description}
                 </p>
               </div>

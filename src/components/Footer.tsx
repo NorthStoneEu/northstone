@@ -48,7 +48,7 @@ const legalLinks = [
 
 export default function Footer() {
   return (
-    <footer className="bg-[#0A0A0A] text-white pt-10 md:pt-16 pb-6 md:pb-8 px-6">
+    <footer className="bg-[#0A0A0A] text-white pt-10 md:pt-16 pb-6 md:pb-8 px-6 border-t border-[#B8985A]/30">
       <div className="max-w-5xl mx-auto">
         {/* Bloc haut : Logo + Newsletter */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-16 pb-8 md:pb-12 border-b border-white/10">
