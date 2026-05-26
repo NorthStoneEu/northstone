@@ -60,8 +60,8 @@ export default function DropsPage() {
     <>
       <Header />
 
-      {/* HERO : 2 colonnes côte à côte avec hauteurs égales */}
-      <section className="relative bg-[#0A0A0A] text-white lg:min-h-screen flex items-center px-4 sm:px-6 pt-20 sm:pt-24 pb-8 md:pb-16 overflow-hidden">
+      {/* HERO : 2 colonnes côte à côte avec marges symétriques visuellement */}
+      <section className="relative bg-[#0A0A0A] text-white lg:min-h-screen flex items-center px-4 sm:px-6 pt-20 sm:pt-24 pb-5 sm:pb-6 overflow-hidden">
         <div className="relative z-10 max-w-7xl mx-auto w-full">
           <div className="grid grid-cols-2 gap-3 sm:gap-6 lg:gap-16 items-stretch lg:items-center">
             {/* Colonne gauche : Image (hauteur égale à la colonne droite) */}
@@ -81,9 +81,9 @@ export default function DropsPage() {
               </div>
             </FadeIn>
 
-            {/* Colonne droite : Texte + countdown */}
-            <FadeIn direction="right" duration={900}>
-              <div className="flex flex-col">
+            {/* Colonne droite : Texte + countdown (centré verticalement) */}
+            <FadeIn direction="right" duration={900} className="h-full">
+              <div className="flex flex-col justify-center h-full">
                 <div className="inline-flex items-center gap-2 mb-3 sm:mb-6">
                   <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-[#B8985A] rounded-full animate-pulse" />
                   <span className="text-[7px] sm:text-xs tracking-[0.2em] sm:tracking-[0.4em] uppercase text-[#B8985A]">
@@ -183,17 +183,17 @@ export default function DropsPage() {
       <section className="bg-[#0A0A0A] text-white py-20 md:py-32 px-6">
         <div className="max-w-7xl mx-auto">
           <FadeIn direction="up">
-            <div className="text-center mb-12 md:mb-16">
+            <div className="text-center mb-12 md:mb-20">
               <p className="text-[10px] sm:text-xs tracking-[0.4em] uppercase text-[#B8985A] mb-4">
-                Les récompenses
+                Les gains
               </p>
               <h2 className="text-2xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-[0.95]">
-                130 GAINS.
+                130 GAGNANTS
                 <br />
                 <span className="text-white/40">SUR 400 PIÈCES.</span>
               </h2>
-              <div className="w-16 h-px bg-[#B8985A] mx-auto mt-8" />
-              <p className="text-sm sm:text-base text-white/60 max-w-2xl mx-auto mt-6 leading-relaxed">
+              <div className="w-16 h-px bg-[#B8985A] mx-auto mt-8 mb-6" />
+              <p className="text-sm sm:text-base text-white/60 max-w-xl mx-auto">
                 1 chance sur 3. Tirage au sort. Révélation au scan.
               </p>
             </div>

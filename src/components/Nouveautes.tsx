@@ -86,15 +86,15 @@ const products = [
 
 export default function Nouveautes() {
   return (
-    <section className="bg-[#F5F1EA] py-12 md:py-32 px-6">
-      <div className="max-w-7xl mx-auto">
+    <section className="bg-[#F5F1EA] py-12 md:py-16 px-6">
+      <div className="max-w-5xl mx-auto">
         {/* En-tête de section */}
-        <div className="flex flex-col md:flex-row md:items-end md:justify-between mb-8 md:mb-16 gap-4 md:gap-6">
+        <div className="flex flex-col md:flex-row md:items-end md:justify-between mb-8 md:mb-10 gap-4 md:gap-6">
           <div>
-            <p className="text-[10px] sm:text-xs tracking-[0.4em] uppercase text-[#B8985A] mb-4">
+            <p className="text-[10px] sm:text-[10px] tracking-[0.4em] uppercase text-[#B8985A] mb-3">
               Nouvelle Collection
             </p>
-            <h2 className="text-2xl sm:text-4xl lg:text-5xl font-black tracking-tight text-[#1A2332] leading-[0.95]">
+            <h2 className="text-2xl sm:text-2xl lg:text-3xl font-black tracking-tight text-[#1A2332] leading-[0.95]">
               DERNIERS
               <br />
               ARRIVAGES.
@@ -104,12 +104,12 @@ export default function Nouveautes() {
           {/* Lien "Voir tout" version desktop */}
           <Link
             href="/homme"
-            className="hidden md:inline-flex items-center gap-3 text-xs tracking-[0.2em] uppercase font-semibold text-[#1A2332] border-b border-[#1A2332] pb-1 hover:gap-5 hover:text-[#B8985A] hover:border-[#B8985A] transition-all duration-300 self-start md:self-end"
+            className="hidden md:inline-flex items-center gap-3 text-[10px] tracking-[0.2em] uppercase font-semibold text-[#1A2332] border-b border-[#1A2332] pb-1 hover:gap-5 hover:text-[#B8985A] hover:border-[#B8985A] transition-all duration-300 self-start md:self-end"
           >
             Voir toute la collection
             <svg
-              width="16"
-              height="12"
+              width="14"
+              height="10"
               viewBox="0 0 16 12"
               fill="none"
               stroke="currentColor"
@@ -123,7 +123,7 @@ export default function Nouveautes() {
         </div>
 
         {/* Grille de produits */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-6 lg:gap-8">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-5 lg:gap-5">
           {products.map((product) => (
             <Link
               key={product.id}
@@ -131,7 +131,7 @@ export default function Nouveautes() {
               className="group block"
             >
               {/* Image produit */}
-              <div className="relative aspect-[3/4] w-full overflow-hidden bg-[#EFE9DC] mb-2 sm:mb-4">
+              <div className="relative aspect-[3/4] w-full overflow-hidden bg-[#EFE9DC] mb-2 sm:mb-3">
                 <div
                   className="absolute inset-0 bg-cover bg-center transition-transform duration-700 ease-out group-hover:scale-105"
                   style={{ backgroundImage: `url('${product.image}')` }}
@@ -140,14 +140,14 @@ export default function Nouveautes() {
 
                 {/* Badge "Nouveau" si applicable */}
                 {product.isNew && (
-                  <div className="absolute top-2 left-2 sm:top-3 sm:left-3 bg-[#1A2332] text-[#F5F1EA] px-2 py-0.5 sm:px-3 sm:py-1 text-[8px] sm:text-[9px] tracking-[0.2em] uppercase font-semibold">
+                  <div className="absolute top-2 left-2 sm:top-3 sm:left-3 bg-[#1A2332] text-[#F5F1EA] px-2 py-0.5 sm:px-2.5 sm:py-1 text-[8px] sm:text-[9px] tracking-[0.2em] uppercase font-semibold">
                     Nouveau
                   </div>
                 )}
 
                 {/* Bouton "Voir le produit" qui apparaît au hover (desktop seulement) */}
-                <div className="hidden md:flex absolute inset-x-4 bottom-4 opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300">
-                  <div className="w-full bg-[#F5F1EA] text-[#1A2332] py-3 text-center text-[10px] tracking-[0.2em] uppercase font-semibold">
+                <div className="hidden md:flex absolute inset-x-3 bottom-3 opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300">
+                  <div className="w-full bg-[#F5F1EA] text-[#1A2332] py-2.5 text-center text-[9px] tracking-[0.2em] uppercase font-semibold">
                     Voir le produit
                   </div>
                 </div>
@@ -158,7 +158,7 @@ export default function Nouveautes() {
                <p className="text-[9px] sm:text-[10px] tracking-[0.2em] uppercase text-[#6B6B6B]">
                 {product.category}
                </p>
-               <h3 className="text-xs sm:text-base font-semibold text-[#1A2332] group-hover:text-[#B8985A] transition-colors leading-tight">
+               <h3 className="text-xs sm:text-sm font-semibold text-[#1A2332] group-hover:text-[#B8985A] transition-colors leading-tight">
                 {product.name}
                </h3>
                <p className="text-xs sm:text-sm font-semibold text-[#1A2332]">

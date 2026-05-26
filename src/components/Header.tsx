@@ -19,6 +19,8 @@ const socialLinks = [
 export default function Header() {
   // État du menu mobile : true = ouvert, false = fermé
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  // État du scroll : true si on a scrollé plus de 40px (= bandeau dépassé)
+  const [isScrolled, setIsScrolled] = useState(false);
 
   // Bloquer le scroll du body quand le menu est ouvert
   useEffect(() => {
@@ -27,16 +29,28 @@ export default function Header() {
     } else {
       document.body.style.overflow = "";
     }
-    // Cleanup : remettre le scroll quand le composant disparaît
     return () => {
       document.body.style.overflow = "";
     };
   }, [isMenuOpen]);
 
+  // Détecter le scroll pour savoir si le bandeau est dépassé
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 40);
+    };
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
   return (
     <>
-      {/* Header principal (toujours visible, sticky en haut) */}
-      <header className="fixed top-0 left-0 right-0 z-50 bg-[#F5F1EA]/80 backdrop-blur-md border-b border-[#D9D2C5]">
+      {/* Header principal (sticky, se positionne sous le bandeau ou en haut selon scroll) */}
+      <header
+        className={`sticky left-0 right-0 z-40 bg-[#F5F1EA]/80 backdrop-blur-md border-b border-[#D9D2C5] transition-all duration-300 ${
+          isScrolled ? "top-0" : "top-0"
+        }`}
+      >
         <div className="max-w-7xl mx-auto px-6 sm:px-10 h-16 flex items-center justify-between">
           {/* Logo */}
           <Link
@@ -67,7 +81,6 @@ export default function Header() {
             aria-label={isMenuOpen ? "Fermer le menu" : "Ouvrir le menu"}
           >
             {isMenuOpen ? (
-              // Icône X (croix)
               <svg
                 width="24"
                 height="24"
@@ -80,7 +93,6 @@ export default function Header() {
                 <line x1="18" y1="6" x2="6" y2="18" />
               </svg>
             ) : (
-              // Icône burger (3 lignes)
               <svg
                 width="24"
                 height="24"

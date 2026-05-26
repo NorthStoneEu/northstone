@@ -19,22 +19,23 @@ const universes = [
 
 export default function Universes() {
   return (
-    <section className="bg-[#EFE9DC] py-12 md:py-32 px-6">
-      <div className="max-w-7xl mx-auto">
+    <section className="bg-[#EFE9DC] py-12 md:py-16 px-6">
+      <div className="max-w-4xl mx-auto">
         {/* En-tête de section */}
-        <div className="text-center mb-8 md:mb-20">
-          <p className="text-[10px] sm:text-xs tracking-[0.4em] uppercase text-[#6B6B6B] mb-4">
+        <div className="text-center mb-8 md:mb-10">
+          <p className="text-[10px] sm:text-[10px] tracking-[0.4em] uppercase text-[#6B6B6B] mb-3">
             Les Collections
           </p>
-          <h2 className="text-2xl sm:text-5xl lg:text-6xl font-black tracking-tight text-[#1A2332] leading-[0.95]">
+          <h2 className="text-2xl sm:text-2xl lg:text-3xl font-black tracking-tight text-[#1A2332] leading-[0.95]">
             DEUX UNIVERS,
             <br />
             UNE MÊME EXIGENCE.
           </h2>
+          <div className="w-10 h-px bg-[#B8985A] mx-auto mt-5" />
         </div>
 
         {/* Grille des univers */}
-        <div className="grid grid-cols-2 gap-3 md:gap-6 lg:gap-10">
+        <div className="grid grid-cols-2 gap-3 md:gap-4 lg:gap-5">
           {universes.map((universe) => (
             <Link
               key={universe.title}
@@ -55,18 +56,18 @@ export default function Universes() {
               />
 
               {/* Texte en bas */}
-              <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-6 md:p-10 text-white">
-                <h3 className="text-xl sm:text-3xl lg:text-5xl font-black tracking-tight mb-1 sm:mb-2">
+              <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-4 md:p-5 text-white">
+                <h3 className="text-xl sm:text-xl lg:text-2xl font-black tracking-tight mb-1">
                   {universe.title}
                 </h3>
-                <p className="text-[10px] sm:text-sm text-white/80 mb-3 sm:mb-6 leading-tight">
+                <p className="text-[10px] sm:text-[11px] text-white/80 mb-3 leading-tight">
                   {universe.subtitle}
                 </p>
-                <div className="inline-flex items-center gap-2 text-[9px] sm:text-xs tracking-[0.2em] uppercase font-semibold border-b border-white pb-1 group-hover:gap-5 transition-all duration-300">
+                <div className="inline-flex items-center gap-2 text-[9px] sm:text-[10px] tracking-[0.2em] uppercase font-semibold border-b border-white pb-1 group-hover:gap-4 transition-all duration-300">
                   Découvrir la collection
                   <svg
-                    width="16"
-                    height="12"
+                    width="14"
+                    height="10"
                     viewBox="0 0 16 12"
                     fill="none"
                     stroke="currentColor"
