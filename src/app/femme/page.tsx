@@ -6,242 +6,48 @@ import Header from "@/components/Header";
 import AnnouncementBar from "@/components/AnnouncementBar";
 import Footer from "@/components/Footer";
 import FadeIn from "@/components/FadeIn";
+import { products as allProducts } from "@/data/products";
 
-// ============================================
-// PRODUITS FEMME (placeholders)
-// ============================================
-const products = [
-  // ===== ROBES =====
-  {
-    id: 1,
-    name: "Robe lin crème",
-    category: "Robes",
-    price: 220,
-    image: "https://images.unsplash.com/photo-1572804013309-59a88b7e92f1?q=80&w=900&auto=format&fit=crop",
-    href: "/femme/robe-lin",
-    isNew: true,
-    colors: ["Crème", "Beige"],
-  },
-  {
-    id: 2,
-    name: "Robe satin marine",
-    category: "Robes",
-    price: 290,
-    image: "https://images.unsplash.com/photo-1496747611176-843222e1e57c?q=80&w=900&auto=format&fit=crop",
-    href: "/femme/robe-satin",
-    isNew: false,
-    colors: ["Marine"],
-  },
-  {
-    id: 3,
-    name: "Robe midi noire",
-    category: "Robes",
-    price: 245,
-    image: "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80&w=900&auto=format&fit=crop",
-    href: "/femme/robe-midi",
-    isNew: true,
-    colors: ["Noir"],
-  },
+// Mappage des noms de couleurs vers leurs valeurs hexadécimales
+const colorMap: Record<string, string> = {
+  "Noir": "#0A0A0A",
+  "Blanc": "#FFFFFF",
+  "Blanc cassé": "#F5EFE3",
+  "Crème": "#F0E6D2",
+  "Beige": "#D4C5A9",
+  "Marine": "#1A2332",
+  "Bleu ciel": "#A4C8E1",
+  "Gris": "#9CA3AF",
+  "Anthracite": "#3D3D3D",
+  "Bordeaux": "#6B1F2E",
+  "Kaki": "#5C5D3D",
+  "Vert forêt": "#1F3D2E",
+  "Cognac": "#8B5A3C",
+  "Rose poudré": "#E8C5C5",
+};
 
-  // ===== T-SHIRTS =====
-  {
-    id: 4,
-    name: "T-shirt brodé blanc",
-    category: "T-shirts",
-    price: 85,
-    image: "https://images.unsplash.com/photo-1564257631407-4deb1f99d992?q=80&w=900&auto=format&fit=crop",
-    href: "/femme/tshirt-brode",
-    isNew: true,
-    colors: ["Blanc", "Noir"],
-  },
-  {
-    id: 5,
-    name: "T-shirt col rond crème",
-    category: "T-shirts",
-    price: 70,
-    image: "https://images.unsplash.com/photo-1581655353564-df123a1eb820?q=80&w=900&auto=format&fit=crop",
-    href: "/femme/tshirt-creme",
-    isNew: false,
-    colors: ["Crème", "Rose poudré"],
-  },
-  {
-    id: 6,
-    name: "T-shirt manches longues",
-    category: "T-shirts",
-    price: 95,
-    image: "https://images.unsplash.com/photo-1554568218-0f1715e72254?q=80&w=900&auto=format&fit=crop",
-    href: "/femme/tshirt-ml",
-    isNew: false,
-    colors: ["Noir", "Marine"],
-  },
+function getColorValue(colorName: string): string {
+  return colorMap[colorName] || "#9CA3AF";
+}
 
-  // ===== CHEMISIERS =====
-  {
-    id: 7,
-    name: "Chemisier soie blanc",
-    category: "Chemisiers",
-    price: 195,
-    image: "https://images.unsplash.com/photo-1551489186-cf8726f514f8?q=80&w=900&auto=format&fit=crop",
-    href: "/femme/chemisier-soie",
-    isNew: false,
-    colors: ["Blanc", "Crème"],
-  },
-  {
-    id: 8,
-    name: "Chemisier lin beige",
-    category: "Chemisiers",
-    price: 165,
-    image: "https://images.unsplash.com/photo-1602573991155-21f0143bb45c?q=80&w=900&auto=format&fit=crop",
-    href: "/femme/chemisier-lin",
-    isNew: true,
-    colors: ["Beige", "Blanc"],
-  },
-  {
-    id: 9,
-    name: "Chemisier brodé marine",
-    category: "Chemisiers",
-    price: 210,
-    image: "https://images.unsplash.com/photo-1485518882345-15568b007407?q=80&w=900&auto=format&fit=crop",
-    href: "/femme/chemisier-brode",
-    isNew: false,
-    colors: ["Marine"],
-  },
-
-  // ===== PULLS =====
-  {
-    id: 10,
-    name: "Pull cachemire crème",
-    category: "Pulls",
-    price: 290,
-    image: "https://images.unsplash.com/photo-1576566588028-4147f3842f27?q=80&w=900&auto=format&fit=crop",
-    href: "/femme/pull-cachemire",
-    isNew: true,
-    colors: ["Crème", "Beige"],
-  },
-  {
-    id: 11,
-    name: "Pull col roulé noir",
-    category: "Pulls",
-    price: 195,
-    image: "https://images.unsplash.com/photo-1583846783214-7229a91b20ed?q=80&w=900&auto=format&fit=crop",
-    href: "/femme/pull-col-roule",
-    isNew: false,
-    colors: ["Noir", "Marine"],
-  },
-  {
-    id: 12,
-    name: "Pull oversize gris",
-    category: "Pulls",
-    price: 175,
-    image: "https://images.unsplash.com/photo-1620799140188-3b2a02fd9a77?q=80&w=900&auto=format&fit=crop",
-    href: "/femme/pull-oversize",
-    isNew: false,
-    colors: ["Gris", "Anthracite"],
-  },
-
-  // ===== PANTALONS =====
-  {
-    id: 13,
-    name: "Pantalon tailleur noir",
-    category: "Pantalons",
-    price: 210,
-    image: "https://images.unsplash.com/photo-1594633313593-bab3825d0caf?q=80&w=900&auto=format&fit=crop",
-    href: "/femme/pantalon-tailleur",
-    isNew: true,
-    colors: ["Noir", "Anthracite"],
-  },
-  {
-    id: 14,
-    name: "Pantalon lin beige",
-    category: "Pantalons",
-    price: 175,
-    image: "https://images.unsplash.com/photo-1548883354-94bcfe321cbb?q=80&w=900&auto=format&fit=crop",
-    href: "/femme/pantalon-lin",
-    isNew: false,
-    colors: ["Beige", "Crème"],
-  },
-  {
-    id: 15,
-    name: "Pantalon palazzo marine",
-    category: "Pantalons",
-    price: 195,
-    image: "https://images.unsplash.com/photo-1509631179647-0177331693ae?q=80&w=900&auto=format&fit=crop",
-    href: "/femme/pantalon-palazzo",
-    isNew: true,
-    colors: ["Marine"],
-  },
-
-  // ===== VESTES =====
-  {
-    id: 16,
-    name: "Blazer laine anthracite",
-    category: "Vestes",
-    price: 420,
-    image: "https://images.unsplash.com/photo-1591047139829-d91aecb6caea?q=80&w=900&auto=format&fit=crop",
-    href: "/femme/blazer-anthracite",
-    isNew: false,
-    colors: ["Anthracite", "Noir"],
-  },
-  {
-    id: 17,
-    name: "Veste matelassée crème",
-    category: "Vestes",
-    price: 320,
-    image: "https://images.unsplash.com/photo-1591047139756-eb20de2acdde?q=80&w=900&auto=format&fit=crop",
-    href: "/femme/veste-matelassee",
-    isNew: true,
-    colors: ["Crème", "Beige"],
-  },
-  {
-    id: 18,
-    name: "Trench beige classique",
-    category: "Vestes",
-    price: 490,
-    image: "https://images.unsplash.com/photo-1539109136881-3be0616acf4b?q=80&w=900&auto=format&fit=crop",
-    href: "/femme/trench",
-    isNew: true,
-    colors: ["Beige"],
-  },
-
-  // ===== ACCESSOIRES =====
-  {
-    id: 19,
-    name: "Foulard soie brodé",
-    category: "Accessoires",
-    price: 145,
-    image: "https://images.unsplash.com/photo-1601762603339-fd61e28b698a?q=80&w=900&auto=format&fit=crop",
-    href: "/femme/foulard-soie",
-    isNew: true,
-    colors: ["Marine", "Crème"],
-  },
-  {
-    id: 20,
-    name: "Sac cuir bandoulière",
-    category: "Accessoires",
-    price: 390,
-    image: "https://images.unsplash.com/photo-1591561954557-26941169b49e?q=80&w=900&auto=format&fit=crop",
-    href: "/femme/sac-cuir",
-    isNew: false,
-    colors: ["Noir", "Cognac"],
-  },
-  {
-    id: 21,
-    name: "Ceinture cuir or",
-    category: "Accessoires",
-    price: 95,
-    image: "https://images.unsplash.com/photo-1624222247344-550fb60583dc?q=80&w=900&auto=format&fit=crop",
-    href: "/femme/ceinture-cuir",
-    isNew: false,
-    colors: ["Noir", "Cognac"],
-  },
-];
+// Construire la liste produits depuis le fichier de données partagé
+const products = allProducts
+  .filter((p) => p.gender === "femme")
+  .map((p) => ({
+    id: p.id,
+    name: p.name,
+    category: p.category,
+    price: p.price,
+    image: p.imagesByColor[p.colors[0]][0],
+    href: `/femme/${p.slug}`,
+    isNew: p.isNew,
+    colors: p.colors,
+  }));
 
 const categories = ["Tous", "Robes", "T-shirts", "Chemisiers", "Pulls", "Pantalons", "Vestes", "Accessoires"];
 const sortOptions = ["Nouveautés", "Prix croissant", "Prix décroissant"];
 
-// ============================================
 // COMPOSANT PANNEAU DE FILTRES (réutilisable)
-// ============================================
 function FilterPanel({
   selectedCategory,
   setSelectedCategory,
@@ -365,9 +171,7 @@ function FilterPanel({
   );
 }
 
-// ============================================
 // COMPOSANT PRINCIPAL
-// ============================================
 export default function FemmePage() {
   const [selectedCategory, setSelectedCategory] = useState("Tous");
   const [sortBy, setSortBy] = useState("Nouveautés");
@@ -540,11 +344,24 @@ export default function FemmePage() {
                         <p className="text-[11px] sm:text-sm font-semibold text-[#1A2332]">
                           {product.price} €
                         </p>
-                        {product.colors.length > 1 && (
-                          <p className="text-[8px] sm:text-[10px] text-[#6B6B6B] mt-0.5">
-                            {product.colors.length} coloris
-                          </p>
-                        )}
+
+                        {/* Ronds de couleurs */}
+                        <div className="flex items-center gap-1.5 mt-1.5">
+                          {product.colors.map((color: string) => (
+                            <span
+                              key={color}
+                              title={color}
+                              className="w-3 h-3 sm:w-3.5 sm:h-3.5 rounded-full border border-[#1A2332]/30"
+                              style={{ backgroundColor: getColorValue(color) }}
+                              aria-label={color}
+                            />
+                          ))}
+                          {product.colors.length > 1 && (
+                            <span className="text-[8px] sm:text-[10px] text-[#6B6B6B] ml-1">
+                              {product.colors.length} coloris
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </Link>
                   ))}

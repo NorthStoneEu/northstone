@@ -6,242 +6,47 @@ import Header from "@/components/Header";
 import AnnouncementBar from "@/components/AnnouncementBar";
 import Footer from "@/components/Footer";
 import FadeIn from "@/components/FadeIn";
+import { products as allProducts } from "@/data/products";
 
-// ============================================
-// PRODUITS HOMME (placeholders)
-// ============================================
-const products = [
-  // ===== POLOS =====
-  {
-    id: 1,
-    name: "Polo brodé Northstone",
-    category: "Polos",
-    price: 120,
-    image: "https://images.unsplash.com/photo-1586790170083-2f9ceadc732d?q=80&w=900&auto=format&fit=crop",
-    href: "/homme/polo-brode",
-    isNew: true,
-    colors: ["Noir", "Marine"],
-  },
-  {
-    id: 2,
-    name: "Polo manches longues",
-    category: "Polos",
-    price: 145,
-    image: "https://images.unsplash.com/photo-1620012253295-c15cc3e65df4?q=80&w=900&auto=format&fit=crop",
-    href: "/homme/polo-ml",
-    isNew: false,
-    colors: ["Noir", "Bordeaux"],
-  },
-  {
-    id: 3,
-    name: "Polo piqué crème",
-    category: "Polos",
-    price: 110,
-    image: "https://images.unsplash.com/photo-1571455786673-9d9d6c194f90?q=80&w=900&auto=format&fit=crop",
-    href: "/homme/polo-pique",
-    isNew: false,
-    colors: ["Crème", "Marine"],
-  },
+// Mappage des noms de couleurs vers leurs valeurs hexadécimales
+const colorMap: Record<string, string> = {
+  "Noir": "#0A0A0A",
+  "Blanc": "#FFFFFF",
+  "Blanc cassé": "#F5EFE3",
+  "Crème": "#F0E6D2",
+  "Beige": "#D4C5A9",
+  "Marine": "#1A2332",
+  "Bleu ciel": "#A4C8E1",
+  "Gris": "#9CA3AF",
+  "Anthracite": "#3D3D3D",
+  "Bordeaux": "#6B1F2E",
+  "Kaki": "#5C5D3D",
+  "Vert forêt": "#1F3D2E",
+  "Cognac": "#8B5A3C",
+};
 
-  // ===== T-SHIRTS =====
-  {
-    id: 4,
-    name: "T-shirt blanc cassé",
-    category: "T-shirts",
-    price: 75,
-    image: "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?q=80&w=900&auto=format&fit=crop",
-    href: "/homme/tshirt-blanc",
-    isNew: false,
-    colors: ["Blanc cassé", "Noir"],
-  },
-  {
-    id: 5,
-    name: "T-shirt brodé noir",
-    category: "T-shirts",
-    price: 85,
-    image: "https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?q=80&w=900&auto=format&fit=crop",
-    href: "/homme/tshirt-brode-noir",
-    isNew: true,
-    colors: ["Noir"],
-  },
-  {
-    id: 6,
-    name: "T-shirt col rond gris",
-    category: "T-shirts",
-    price: 70,
-    image: "https://images.unsplash.com/photo-1503341504253-dff4815485f1?q=80&w=900&auto=format&fit=crop",
-    href: "/homme/tshirt-gris",
-    isNew: false,
-    colors: ["Gris", "Blanc"],
-  },
+function getColorValue(colorName: string): string {
+  return colorMap[colorName] || "#9CA3AF";
+}
 
-  // ===== CHEMISES =====
-  {
-    id: 7,
-    name: "Chemise oxford blanche",
-    category: "Chemises",
-    price: 150,
-    image: "https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?q=80&w=900&auto=format&fit=crop",
-    href: "/homme/chemise-oxford",
-    isNew: false,
-    colors: ["Blanc", "Bleu ciel"],
-  },
-  {
-    id: 8,
-    name: "Chemise lin beige",
-    category: "Chemises",
-    price: 175,
-    image: "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?q=80&w=900&auto=format&fit=crop",
-    href: "/homme/chemise-lin",
-    isNew: true,
-    colors: ["Beige", "Blanc"],
-  },
-  {
-    id: 9,
-    name: "Chemise carreaux marine",
-    category: "Chemises",
-    price: 165,
-    image: "https://images.unsplash.com/photo-1589310243389-96a5483213a8?q=80&w=900&auto=format&fit=crop",
-    href: "/homme/chemise-carreaux",
-    isNew: false,
-    colors: ["Marine"],
-  },
-
-  // ===== SWEATS =====
-  {
-    id: 10,
-    name: "Sweat à capuche kaki",
-    category: "Sweats",
-    price: 180,
-    image: "https://images.unsplash.com/photo-1556821840-3a63f95609a7?q=80&w=900&auto=format&fit=crop",
-    href: "/homme/sweat-kaki",
-    isNew: true,
-    colors: ["Kaki"],
-  },
-  {
-    id: 11,
-    name: "Sweatshirt brodé",
-    category: "Sweats",
-    price: 195,
-    image: "https://images.unsplash.com/photo-1542406775-ade58c52d2e4?q=80&w=900&auto=format&fit=crop",
-    href: "/homme/sweat-brode",
-    isNew: false,
-    colors: ["Gris", "Noir"],
-  },
-  {
-    id: 12,
-    name: "Sweat col rond crème",
-    category: "Sweats",
-    price: 165,
-    image: "https://images.unsplash.com/photo-1572495641004-28421ae29ed4?q=80&w=900&auto=format&fit=crop",
-    href: "/homme/sweat-creme",
-    isNew: false,
-    colors: ["Crème", "Marine"],
-  },
-
-  // ===== PULLS =====
-  {
-    id: 13,
-    name: "Pull col rond vert forêt",
-    category: "Pulls",
-    price: 220,
-    image: "https://images.unsplash.com/photo-1620799140408-edc6dcb6d633?q=80&w=900&auto=format&fit=crop",
-    href: "/homme/pull-vert",
-    isNew: true,
-    colors: ["Vert forêt"],
-  },
-  {
-    id: 14,
-    name: "Pull cachemire marine",
-    category: "Pulls",
-    price: 290,
-    image: "https://images.unsplash.com/photo-1580331451062-99ff652288d7?q=80&w=900&auto=format&fit=crop",
-    href: "/homme/pull-cachemire",
-    isNew: true,
-    colors: ["Marine", "Anthracite"],
-  },
-  {
-    id: 15,
-    name: "Pull torsadé beige",
-    category: "Pulls",
-    price: 245,
-    image: "https://images.unsplash.com/photo-1599566150163-29194dcaad36?q=80&w=900&auto=format&fit=crop",
-    href: "/homme/pull-torsade",
-    isNew: false,
-    colors: ["Beige", "Crème"],
-  },
-
-  // ===== PANTALONS =====
-  {
-    id: 16,
-    name: "Pantalon chino beige",
-    category: "Pantalons",
-    price: 160,
-    image: "https://images.unsplash.com/photo-1473966968600-fa801b869a1a?q=80&w=900&auto=format&fit=crop",
-    href: "/homme/chino-beige",
-    isNew: false,
-    colors: ["Beige", "Marine"],
-  },
-  {
-    id: 17,
-    name: "Pantalon laine gris",
-    category: "Pantalons",
-    price: 210,
-    image: "https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?q=80&w=900&auto=format&fit=crop",
-    href: "/homme/pantalon-laine",
-    isNew: true,
-    colors: ["Gris", "Anthracite"],
-  },
-  {
-    id: 18,
-    name: "Pantalon coton noir",
-    category: "Pantalons",
-    price: 175,
-    image: "https://images.unsplash.com/photo-1542272604-787c3835535d?q=80&w=900&auto=format&fit=crop",
-    href: "/homme/pantalon-coton",
-    isNew: false,
-    colors: ["Noir"],
-  },
-
-  // ===== VESTES =====
-  {
-    id: 19,
-    name: "Veste matelassée navy",
-    category: "Vestes",
-    price: 320,
-    image: "https://images.unsplash.com/photo-1551028719-00167b16eac5?q=80&w=900&auto=format&fit=crop",
-    href: "/homme/veste-navy",
-    isNew: true,
-    colors: ["Marine"],
-  },
-  {
-    id: 20,
-    name: "Blazer laine anthracite",
-    category: "Vestes",
-    price: 480,
-    image: "https://images.unsplash.com/photo-1594938298603-c8148c4dae35?q=80&w=900&auto=format&fit=crop",
-    href: "/homme/blazer-anthracite",
-    isNew: false,
-    colors: ["Anthracite", "Marine"],
-  },
-  {
-    id: 21,
-    name: "Veste perfecto cuir",
-    category: "Vestes",
-    price: 590,
-    image: "https://images.unsplash.com/photo-1551537482-f2075a1d41f2?q=80&w=900&auto=format&fit=crop",
-    href: "/homme/veste-perfecto",
-    isNew: true,
-    colors: ["Noir"],
-  },
-];
+// Construire la liste produits depuis le fichier de données partagé
+const products = allProducts
+  .filter((p) => p.gender === "homme")
+  .map((p) => ({
+    id: p.id,
+    name: p.name,
+    category: p.category,
+    price: p.price,
+    image: p.imagesByColor[p.colors[0]][0],
+    href: `/homme/${p.slug}`,
+    isNew: p.isNew,
+    colors: p.colors,
+  }));
 
 const categories = ["Tous", "Polos", "T-shirts", "Chemises", "Sweats", "Pulls", "Pantalons", "Vestes"];
 const sortOptions = ["Nouveautés", "Prix croissant", "Prix décroissant"];
 
-// ============================================
 // COMPOSANT PANNEAU DE FILTRES (réutilisable)
-// ============================================
 function FilterPanel({
   selectedCategory,
   setSelectedCategory,
@@ -365,9 +170,7 @@ function FilterPanel({
   );
 }
 
-// ============================================
 // COMPOSANT PRINCIPAL
-// ============================================
 export default function HommePage() {
   const [selectedCategory, setSelectedCategory] = useState("Tous");
   const [sortBy, setSortBy] = useState("Nouveautés");
@@ -377,7 +180,6 @@ export default function HommePage() {
   const [appliedMaxPrice, setAppliedMaxPrice] = useState(9999);
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
 
-  // Bloquer le scroll body quand le drawer mobile est ouvert
   useEffect(() => {
     if (isMobileFilterOpen) {
       document.body.style.overflow = "hidden";
@@ -403,14 +205,12 @@ export default function HommePage() {
     setAppliedMaxPrice(9999);
   };
 
-  // Filtrage
   let filteredProducts = products.filter((p) => {
     if (selectedCategory !== "Tous" && p.category !== selectedCategory) return false;
     if (p.price < appliedMinPrice || p.price > appliedMaxPrice) return false;
     return true;
   });
 
-  // Tri
   if (sortBy === "Prix croissant") {
     filteredProducts = [...filteredProducts].sort((a, b) => a.price - b.price);
   } else if (sortBy === "Prix décroissant") {
@@ -439,7 +239,7 @@ export default function HommePage() {
       <Header />
       <AnnouncementBar />
 
-      {/* HERO SECTION */}
+      {/* HERO */}
       <section className="relative bg-[#0A0A0A] text-white overflow-hidden">
         <div
           className="absolute inset-0 bg-cover bg-center opacity-50"
@@ -469,12 +269,12 @@ export default function HommePage() {
         </div>
       </section>
 
-      {/* CONTENU PRINCIPAL : FILTRES + GRILLE */}
+      {/* CONTENU PRINCIPAL */}
       <section className="bg-[#F5F1EA] py-8 md:py-16 px-3 sm:px-6">
         <div className="max-w-7xl mx-auto">
           <div className="grid grid-cols-1 lg:grid-cols-[240px_1fr] gap-8 lg:gap-12">
 
-            {/* SIDEBAR DESKTOP UNIQUEMENT */}
+            {/* SIDEBAR DESKTOP */}
             <aside className="hidden lg:block lg:sticky lg:top-20 lg:self-start">
               <FadeIn direction="up">
                 <FilterPanel {...filterProps} />
@@ -483,13 +283,11 @@ export default function HommePage() {
 
             {/* GRILLE PRODUITS */}
             <div>
-              {/* Barre du haut : compteur + bouton filtre mobile */}
               <div className="flex justify-between items-center mb-4 md:mb-8">
                 <p className="text-[10px] sm:text-xs tracking-[0.2em] uppercase text-[#1A2332]/60">
                   {filteredProducts.length} pièce{filteredProducts.length > 1 ? "s" : ""}
                 </p>
 
-                {/* Bouton "Filtrer" mobile uniquement */}
                 <button
                   onClick={() => setIsMobileFilterOpen(true)}
                   className="lg:hidden inline-flex items-center gap-2 bg-black text-[#B8985A] border border-black px-4 py-2 text-[10px] tracking-[0.2em] uppercase font-semibold hover:bg-[#1F1F1F] transition-all"
@@ -515,7 +313,6 @@ export default function HommePage() {
                       href={product.href}
                       className="group block"
                     >
-                      {/* Image produit */}
                       <div className="relative aspect-[3/4] w-full overflow-hidden bg-[#EFE9DC] mb-2 sm:mb-3">
                         <div
                           className="absolute inset-0 bg-cover bg-center transition-transform duration-700 ease-out group-hover:scale-105"
@@ -536,7 +333,6 @@ export default function HommePage() {
                         </div>
                       </div>
 
-                      {/* Infos produit */}
                       <div className="flex flex-col gap-0.5 sm:gap-1">
                         <p className="text-[8px] sm:text-[10px] tracking-[0.2em] uppercase text-[#6B6B6B]">
                           {product.category}
@@ -547,11 +343,24 @@ export default function HommePage() {
                         <p className="text-[11px] sm:text-sm font-semibold text-[#1A2332]">
                           {product.price} €
                         </p>
-                        {product.colors.length > 1 && (
-                          <p className="text-[8px] sm:text-[10px] text-[#6B6B6B] mt-0.5">
-                            {product.colors.length} coloris
-                          </p>
-                        )}
+
+                        {/* Ronds de couleurs */}
+                        <div className="flex items-center gap-1.5 mt-1.5">
+                          {product.colors.map((color) => (
+                            <span
+                              key={color}
+                              title={color}
+                              className="w-3 h-3 sm:w-3.5 sm:h-3.5 rounded-full border border-[#1A2332]/30"
+                              style={{ backgroundColor: getColorValue(color) }}
+                              aria-label={color}
+                            />
+                          ))}
+                          {product.colors.length > 1 && (
+                            <span className="text-[8px] sm:text-[10px] text-[#6B6B6B] ml-1">
+                              {product.colors.length} coloris
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </Link>
                   ))}
@@ -569,7 +378,6 @@ export default function HommePage() {
           isMobileFilterOpen ? "visible" : "invisible"
         }`}
       >
-        {/* Overlay sombre */}
         <div
           className={`absolute inset-0 bg-black/50 transition-opacity duration-500 ${
             isMobileFilterOpen ? "opacity-100" : "opacity-0"
@@ -578,13 +386,11 @@ export default function HommePage() {
           aria-hidden="true"
         />
 
-        {/* Panneau */}
         <div
           className={`absolute top-0 right-0 h-full w-[85%] max-w-sm bg-[#F5F1EA] shadow-2xl transition-transform duration-500 ease-in-out ${
             isMobileFilterOpen ? "translate-x-0" : "translate-x-full"
           } flex flex-col`}
         >
-          {/* Header du drawer */}
           <div className="flex items-center justify-between px-6 py-4 border-b border-[#1A2332]/10">
             <h2 className="text-xs tracking-[0.3em] uppercase font-semibold text-[#1A2332]">
               Filtres
@@ -601,12 +407,10 @@ export default function HommePage() {
             </button>
           </div>
 
-          {/* Contenu scrollable */}
           <div className="flex-1 overflow-y-auto px-6 py-6">
             <FilterPanel {...filterProps} />
           </div>
 
-          {/* Footer du drawer : bouton voir résultats */}
           <div className="px-6 py-4 border-t border-[#1A2332]/10">
             <button
               onClick={() => setIsMobileFilterOpen(false)}
