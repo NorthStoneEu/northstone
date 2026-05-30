@@ -8,6 +8,7 @@ import AnnouncementBar from "@/components/AnnouncementBar";
 import Footer from "@/components/Footer";
 import FadeIn from "@/components/FadeIn";
 import { getProductBySlug, getSimilarProducts } from "@/data/products";
+import { useCart } from "@/context/CartContext";
 
 const colorMap: Record<string, string> = {
   "Noir": "#0A0A0A",
@@ -43,6 +44,7 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
 }
 
 function ProductDetail({ product, similar }: { product: any; similar: any[] }) {
+  const { addItem, openCart } = useCart();
   const [selectedColor, setSelectedColor] = useState(product.colors[0]);
   const [selectedImage, setSelectedImage] = useState(0);
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
@@ -59,6 +61,21 @@ function ProductDetail({ product, similar }: { product: any; similar: any[] }) {
 
   const toggleAccordion = (id: string) => {
     setOpenAccordion(openAccordion === id ? null : id);
+  };
+
+  const handleAddToCart = () => {
+    if (!selectedSize) return;
+    addItem({
+      productId: product.id,
+      slug: product.slug,
+      gender: "femme",
+      name: product.name,
+      price: product.price,
+      color: selectedColor,
+      size: selectedSize,
+      image: currentImages[0],
+    });
+    openCart();
   };
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -258,6 +275,7 @@ function ProductDetail({ product, similar }: { product: any; similar: any[] }) {
 
                 {/* Bouton AJOUTER AU PANIER */}
                 <button
+                  onClick={handleAddToCart}
                   disabled={!selectedSize}
                   className={`w-full py-4 text-[11px] tracking-[0.3em] uppercase font-semibold transition-all mb-8 ${
                     selectedSize
