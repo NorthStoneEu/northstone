@@ -4,6 +4,7 @@ import { ClerkProvider } from "@clerk/nextjs";
 import { frFR } from "@clerk/localizations";
 import "./globals.css";
 import ScrollToTop from "@/components/ScrollToTop";
+import { CartProvider } from "@/context/CartContext";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -70,7 +71,9 @@ export default function RootLayout({
       <html lang="fr" className={`${inter.variable} h-full antialiased`}>
         <body className="min-h-full flex flex-col font-sans bg-[#F5F1EA] text-[#0A0A0A]">
           <ScrollToTop />
-          {children}
+          <CartProvider>
+            {children}
+          </CartProvider>
         </body>
       </html>
     </ClerkProvider>

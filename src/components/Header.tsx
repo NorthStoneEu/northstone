@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState, useEffect, useRef } from "react";
 import { useUser, useClerk } from "@clerk/nextjs";
+import { useCart } from "@/context/CartContext";
 
 const categoriesHomme = [
   { label: "Tous", href: "/homme" },
@@ -55,6 +56,7 @@ const socialLinks = [
 export default function Header() {
   const { user, isSignedIn } = useUser();
   const { signOut } = useClerk();
+  const { totalItems, openCart } = useCart();
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
@@ -277,14 +279,56 @@ export default function Header() {
                 </div>
               </div>
             )}
+
+            {/* === ICÔNE PANIER (desktop) === */}
+            <button
+              onClick={openCart}
+              onMouseEnter={() => setHoveredMenu(null)}
+              className="relative flex items-center text-[#1A2332] hover:text-[#B8985A] transition-colors duration-300"
+              aria-label="Ouvrir le panier"
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z" />
+                <line x1="3" y1="6" x2="21" y2="6" />
+                <path d="M16 10a4 4 0 0 1-8 0" />
+              </svg>
+              {totalItems > 0 && (
+                <span
+                  className="absolute -top-2 -right-2 min-w-[16px] h-[16px] px-1 flex items-center justify-center text-[9px] font-semibold rounded-full"
+                  style={{ backgroundColor: "#B8985A", color: "#0A0A0A" }}
+                >
+                  {totalItems}
+                </span>
+              )}
+            </button>
           </nav>
 
-          {/* Bouton burger / X (mobile uniquement) */}
-          <button
-            className="md:hidden text-[#1A2332] z-50 relative"
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
-            aria-label={isMenuOpen ? "Fermer le menu" : "Ouvrir le menu"}
-          >
+          {/* Panier + burger (mobile uniquement) */}
+          <div className="md:hidden flex items-center gap-5">
+            <button
+              onClick={openCart}
+              className="relative flex items-center text-[#1A2332]"
+              aria-label="Ouvrir le panier"
+            >
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z" />
+                <line x1="3" y1="6" x2="21" y2="6" />
+                <path d="M16 10a4 4 0 0 1-8 0" />
+              </svg>
+              {totalItems > 0 && (
+                <span
+                  className="absolute -top-2 -right-2 min-w-[16px] h-[16px] px-1 flex items-center justify-center text-[9px] font-semibold rounded-full"
+                  style={{ backgroundColor: "#B8985A", color: "#0A0A0A" }}
+                >
+                  {totalItems}
+                </span>
+              )}
+            </button>
+            <button
+              className="text-[#1A2332] z-50 relative"
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              aria-label={isMenuOpen ? "Fermer le menu" : "Ouvrir le menu"}
+            >
             {isMenuOpen ? (
               <svg
                 width="24"
@@ -310,7 +354,8 @@ export default function Header() {
                 <line x1="3" y1="16" x2="21" y2="16" />
               </svg>
             )}
-          </button>
+            </button>
+          </div>
         </div>
 
         {/* MEGA MENU DESKTOP */}
