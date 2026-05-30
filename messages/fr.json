@@ -1,0 +1,104 @@
+{
+  "common": {
+    "save": "Enregistrer",
+    "cancel": "Annuler",
+    "edit": "Modifier",
+    "delete": "Supprimer",
+    "add": "Ajouter",
+    "close": "Fermer",
+    "loading": "Chargement...",
+    "saved": "Enregistré"
+  },
+  "header": {
+    "homme": "Homme",
+    "femme": "Femme",
+    "drops": "Drops",
+    "compte": "Compte",
+    "signIn": "Se connecter",
+    "signOut": "Déconnexion",
+    "myAccount": "Mon profil",
+    "myOrders": "Mes commandes",
+    "myFavorites": "Mes favoris",
+    "hello": "Bonjour"
+  },
+  "footer": {
+    "copyright": "© 2026 Northstone",
+    "newsletter": "Newsletter",
+    "follow": "Suivre",
+    "language": "Langue"
+  },
+  "account": {
+    "title": "MON COMPTE",
+    "subtitle": "Espace personnel",
+    "tabs": {
+      "info": "Mes informations",
+      "addresses": "Mes adresses",
+      "security": "Sécurité"
+    },
+    "info": {
+      "title": "Mes informations",
+      "description": "Complétez votre profil personnel.",
+      "civility": "Civilité",
+      "madam": "Madame",
+      "sir": "Monsieur",
+      "other": "Autre",
+      "phone": "Téléphone",
+      "birthday": "Date de naissance",
+      "birthdayHint": "Pour vous offrir une attention le jour J",
+      "newsletter": "Recevoir les actualités et drops Northstone en avant-première"
+    },
+    "addresses": {
+      "title": "Mes adresses",
+      "description": "Vos adresses de livraison et de facturation.",
+      "addNew": "Ajouter",
+      "empty": "Aucune adresse enregistrée.",
+      "newAddress": "Nouvelle adresse",
+      "editAddress": "Modifier l'adresse",
+      "label": "Libellé",
+      "labelPlaceholder": "Domicile, Bureau...",
+      "firstName": "Prénom",
+      "lastName": "Nom",
+      "address": "Adresse",
+      "addressPlaceholder": "Commencez à taper votre adresse...",
+      "complement": "Complément",
+      "complementPlaceholder": "Appartement, étage...",
+      "postalCode": "Code postal",
+      "city": "Ville",
+      "country": "Pays",
+      "phone": "Téléphone",
+      "defaultShipping": "Adresse de livraison par défaut",
+      "defaultBilling": "Adresse de facturation par défaut",
+      "confirmDelete": "Supprimer cette adresse ?",
+      "shippingBadge": "Livraison",
+      "billingBadge": "Facturation"
+    }
+  },
+  "drop": {
+    "eyebrow": "Drop 01 — La Genèse",
+    "title": "LA PIÈCE",
+    "titleHighlight": "DE LA RAISON.",
+    "tagline": "400 pièces. 130 gagnants. Une seule chance.",
+    "countdown": "Ouverture des ventes dans",
+    "days": "Jours",
+    "hours": "Heures",
+    "minutes": "Min",
+    "seconds": "Sec",
+    "notifyMe": "Être prévenu·e",
+    "viewDrop": "Voir le drop"
+  },
+  "newsletter": {
+    "eyebrow": "Accès exclusif · Drop 01",
+    "title": "REJOIGNEZ",
+    "titleHighlight": "L'HÉRITAGE.",
+    "description": "Soyez prévenu·e en avant-première du lancement de La Genèse.",
+    "emailLabel": "Adresse email",
+    "phoneLabel": "Téléphone",
+    "phoneOptional": "(optionnel)",
+    "submit": "Rejoindre la liste",
+    "submitting": "Inscription en cours...",
+    "success": "BIENVENUE DANS",
+    "successDescription": "Vous êtes désormais sur la liste exclusive du Drop 01.",
+    "alreadySubscribed": "Cet email est déjà inscrit. Merci !",
+    "invalidEmail": "Adresse email invalide"
+  }
+}

@@ -1,0 +1,104 @@
+{
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "edit": "Edit",
+    "delete": "Delete",
+    "add": "Add",
+    "close": "Close",
+    "loading": "Loading...",
+    "saved": "Saved"
+  },
+  "header": {
+    "homme": "Men",
+    "femme": "Women",
+    "drops": "Drops",
+    "compte": "Account",
+    "signIn": "Sign in",
+    "signOut": "Sign out",
+    "myAccount": "My profile",
+    "myOrders": "My orders",
+    "myFavorites": "My favorites",
+    "hello": "Hello"
+  },
+  "footer": {
+    "copyright": "© 2026 Northstone",
+    "newsletter": "Newsletter",
+    "follow": "Follow",
+    "language": "Language"
+  },
+  "account": {
+    "title": "MY ACCOUNT",
+    "subtitle": "Personal space",
+    "tabs": {
+      "info": "My information",
+      "addresses": "My addresses",
+      "security": "Security"
+    },
+    "info": {
+      "title": "My information",
+      "description": "Complete your personal profile.",
+      "civility": "Title",
+      "madam": "Mrs",
+      "sir": "Mr",
+      "other": "Other",
+      "phone": "Phone",
+      "birthday": "Date of birth",
+      "birthdayHint": "To offer you a special attention on your day",
+      "newsletter": "Receive Northstone news and drops in preview"
+    },
+    "addresses": {
+      "title": "My addresses",
+      "description": "Your shipping and billing addresses.",
+      "addNew": "Add",
+      "empty": "No address saved yet.",
+      "newAddress": "New address",
+      "editAddress": "Edit address",
+      "label": "Label",
+      "labelPlaceholder": "Home, Office...",
+      "firstName": "First name",
+      "lastName": "Last name",
+      "address": "Address",
+      "addressPlaceholder": "Start typing your address...",
+      "complement": "Address line 2",
+      "complementPlaceholder": "Apartment, floor...",
+      "postalCode": "Postal code",
+      "city": "City",
+      "country": "Country",
+      "phone": "Phone",
+      "defaultShipping": "Default shipping address",
+      "defaultBilling": "Default billing address",
+      "confirmDelete": "Delete this address?",
+      "shippingBadge": "Shipping",
+      "billingBadge": "Billing"
+    }
+  },
+  "drop": {
+    "eyebrow": "Drop 01 — Genesis",
+    "title": "THE PIECE",
+    "titleHighlight": "OF REASON.",
+    "tagline": "400 pieces. 130 winners. One chance.",
+    "countdown": "Sales opening in",
+    "days": "Days",
+    "hours": "Hours",
+    "minutes": "Min",
+    "seconds": "Sec",
+    "notifyMe": "Notify me",
+    "viewDrop": "View the drop"
+  },
+  "newsletter": {
+    "eyebrow": "Exclusive access · Drop 01",
+    "title": "JOIN",
+    "titleHighlight": "THE LEGACY.",
+    "description": "Be the first to know about The Genesis launch.",
+    "emailLabel": "Email address",
+    "phoneLabel": "Phone",
+    "phoneOptional": "(optional)",
+    "submit": "Join the list",
+    "submitting": "Subscribing...",
+    "success": "WELCOME TO",
+    "successDescription": "You are now on the exclusive Drop 01 list.",
+    "alreadySubscribed": "This email is already registered. Thank you!",
+    "invalidEmail": "Invalid email address"
+  }
+}
