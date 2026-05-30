@@ -5,6 +5,7 @@ import { frFR } from "@clerk/localizations";
 import "./globals.css";
 import ScrollToTop from "@/components/ScrollToTop";
 import { CartProvider } from "@/context/CartContext";
+import CartDrawer from "@/components/CartDrawer";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -73,6 +74,7 @@ export default function RootLayout({
           <ScrollToTop />
           <CartProvider>
             {children}
+            <CartDrawer />
           </CartProvider>
         </body>
       </html>
