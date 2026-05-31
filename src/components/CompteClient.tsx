@@ -8,7 +8,7 @@ export default function CompteClient() {
   return (
     <div className="flex justify-center">
       <UserProfile
-        path="/compte"
+        routing="hash"
         appearance={{
           variables: {
             colorPrimary: "#B8985A",
