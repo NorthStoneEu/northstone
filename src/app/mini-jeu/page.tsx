@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useUser } from "@clerk/nextjs";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import FadeIn from "@/components/FadeIn";
@@ -9,16 +10,36 @@ import FadeIn from "@/components/FadeIn";
 const MAX_ESSAIS = 3;
 
 export default function MiniJeuPage() {
+  const { isSignedIn, isLoaded } = useUser();
+
   const [reponse, setReponse] = useState("");
   const [essaisRestants, setEssaisRestants] = useState(MAX_ESSAIS);
   const [isLoading, setIsLoading] = useState(false);
   const [erreur, setErreur] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
-  const [bloque, setBloque] = useState(false);
+  const [failed, setFailed] = useState(false);
+
+  // Au chargement (si connecté), on récupère l'état actuel depuis le serveur
+  useEffect(() => {
+    if (!isLoaded || !isSignedIn) return;
+    fetch("/api/etat-enigme")
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.status === "unlocked") {
+          setSuccess(true);
+        } else if (data.status === "failed") {
+          setFailed(true);
+          setEssaisRestants(0);
+        } else if (typeof data.attemptsLeft === "number") {
+          setEssaisRestants(data.attemptsLeft);
+        }
+      })
+      .catch(() => {});
+  }, [isLoaded, isSignedIn]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (isLoading || bloque || !reponse.trim()) return;
+    if (isLoading || failed || !reponse.trim()) return;
 
     setErreur(null);
     setIsLoading(true);
@@ -33,17 +54,16 @@ export default function MiniJeuPage() {
 
       if (data.correct) {
         setSuccess(true);
+      } else if (data.status === "failed") {
+        setFailed(true);
+        setEssaisRestants(0);
+        setErreur("Vous avez épuisé vos tentatives pour ce drop.");
+        setReponse("");
       } else {
-        const restants = essaisRestants - 1;
-        setEssaisRestants(restants);
-        if (restants <= 0) {
-          setBloque(true);
-          setErreur("Vous avez épuisé vos tentatives. Revenez plus tard pour réessayer.");
-        } else {
-          setErreur(
-            `Mauvaise réponse. ${restants} essai${restants > 1 ? "s" : ""} restant${restants > 1 ? "s" : ""}.`
-          );
-        }
+        setEssaisRestants(data.attemptsLeft);
+        setErreur(
+          `Mauvaise réponse. ${data.attemptsLeft} essai${data.attemptsLeft > 1 ? "s" : ""} restant${data.attemptsLeft > 1 ? "s" : ""}.`
+        );
         setReponse("");
       }
     } catch {
@@ -53,12 +73,71 @@ export default function MiniJeuPage() {
     }
   };
 
+  // === ÉTAT : chargement Clerk ===
+  if (!isLoaded) {
+    return (
+      <>
+        <Header />
+        <section className="bg-[#0A0A0A] text-white min-h-[80vh] flex items-center justify-center">
+          <p className="text-xs tracking-[0.3em] uppercase text-white/40">Chargement...</p>
+        </section>
+        <Footer />
+      </>
+    );
+  }
+
+  // === ÉTAT : NON CONNECTÉ ===
+  if (!isSignedIn) {
+    return (
+      <>
+        <Header />
+        <section className="bg-[#0A0A0A] text-white min-h-[80vh] flex items-center justify-center px-4 sm:px-6 py-16">
+          <div className="w-full max-w-lg text-center">
+            <FadeIn direction="up">
+              <div className="flex items-center justify-center gap-2 mb-6">
+                <span style={{ width: "20px", height: "1px", backgroundColor: "#B8985A" }} />
+                <span style={{ width: "4px", height: "4px", backgroundColor: "#B8985A", borderRadius: "50%" }} />
+                <span style={{ width: "20px", height: "1px", backgroundColor: "#B8985A" }} />
+              </div>
+              <p className="text-[10px] tracking-[0.4em] uppercase text-[#B8985A] mb-4 font-medium">
+                Drop 01 · Accès anticipé
+              </p>
+              <h1 className="text-3xl sm:text-4xl font-black tracking-tight leading-[0.95] mb-5">
+                CONNEXION
+                <br />
+                <span className="text-white/35">REQUISE.</span>
+              </h1>
+              <div className="w-12 h-px bg-[#B8985A] mx-auto mb-6" />
+              <p className="text-sm text-white/70 leading-relaxed mb-8 max-w-sm mx-auto">
+                L'énigme est réservée aux membres. Connectez-vous pour tenter de débloquer votre
+                accès anticipé à la pré-commande.
+              </p>
+              <Link
+                href="/sign-in"
+                className="inline-block px-10 py-4 bg-[#B8985A] text-[#0A0A0A] text-[11px] tracking-[0.3em] uppercase font-semibold hover:bg-[#C9A96B] transition-all"
+              >
+                Se connecter
+              </Link>
+              <p className="text-[11px] text-white/40 mt-5">
+                Pas encore de compte ?{" "}
+                <Link href="/sign-up" className="text-[#B8985A] hover:underline">
+                  Créer un compte
+                </Link>
+              </p>
+            </FadeIn>
+          </div>
+        </section>
+        <Footer />
+      </>
+    );
+  }
+
+  // === ÉTAT : CONNECTÉ (jeu) ===
   return (
     <>
       <Header />
 
       <section className="bg-[#0A0A0A] text-white min-h-[80vh] flex items-center justify-center px-4 sm:px-6 py-16 relative overflow-hidden">
-        {/* Halo or discret en fond */}
         <div
           className="absolute inset-0 pointer-events-none"
           aria-hidden="true"
@@ -70,28 +149,89 @@ export default function MiniJeuPage() {
 
         <div className="relative w-full max-w-lg">
           <FadeIn direction="up">
-            {!success ? (
+            {success ? (
+              // ── VICTOIRE ──
               <div className="text-center">
-                {/* Ornement or */}
                 <div className="flex items-center justify-center gap-2 mb-6">
                   <span style={{ width: "20px", height: "1px", backgroundColor: "#B8985A" }} />
                   <span style={{ width: "4px", height: "4px", backgroundColor: "#B8985A", borderRadius: "50%" }} />
                   <span style={{ width: "20px", height: "1px", backgroundColor: "#B8985A" }} />
                 </div>
-
+                <div
+                  className="w-16 h-16 mx-auto mb-6 rounded-full flex items-center justify-center"
+                  style={{ backgroundColor: "rgba(184, 152, 90, 0.12)", border: "1px solid #B8985A" }}
+                >
+                  <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#B8985A" strokeWidth="2">
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
+                </div>
+                <p className="text-[10px] tracking-[0.4em] uppercase text-[#B8985A] mb-4 font-medium">
+                  Énigme résolue
+                </p>
+                <h1 className="text-3xl sm:text-4xl font-black tracking-tight leading-[0.95] mb-5">
+                  ACCÈS
+                  <br />
+                  <span className="text-white/35">DÉBLOQUÉ.</span>
+                </h1>
+                <div className="w-12 h-px bg-[#B8985A] mx-auto mb-6" />
+                <p className="text-sm text-white/70 leading-relaxed mb-8 max-w-sm mx-auto">
+                  Félicitations. Vous faites partie des rares à accéder à la pré-commande en
+                  avant-première.
+                </p>
+                <Link
+                  href="/precommande"
+                  className="inline-block px-10 py-4 bg-[#B8985A] text-[#0A0A0A] text-[11px] tracking-[0.3em] uppercase font-semibold hover:bg-[#C9A96B] transition-all"
+                >
+                  Accéder à la pré-commande
+                </Link>
+              </div>
+            ) : failed ? (
+              // ── ÉCHEC (3 essais épuisés) ──
+              <div className="text-center">
+                <div className="flex items-center justify-center gap-2 mb-6">
+                  <span style={{ width: "20px", height: "1px", backgroundColor: "#B8985A" }} />
+                  <span style={{ width: "4px", height: "4px", backgroundColor: "#B8985A", borderRadius: "50%" }} />
+                  <span style={{ width: "20px", height: "1px", backgroundColor: "#B8985A" }} />
+                </div>
+                <p className="text-[10px] tracking-[0.4em] uppercase text-[#B8985A] mb-4 font-medium">
+                  Tentatives épuisées
+                </p>
+                <h1 className="text-3xl sm:text-4xl font-black tracking-tight leading-[0.95] mb-5">
+                  CE SERA
+                  <br />
+                  <span className="text-white/35">POUR LA PROCHAINE.</span>
+                </h1>
+                <div className="w-12 h-px bg-[#B8985A] mx-auto mb-6" />
+                <p className="text-sm text-white/70 leading-relaxed mb-8 max-w-sm mx-auto">
+                  Vous n'avez pas trouvé l'énigme cette fois. Pas d'inquiétude : vous pourrez tout
+                  de même commander à l'ouverture publique du drop, dans la limite des stocks
+                  disponibles.
+                </p>
+                <Link
+                  href="/drops"
+                  className="inline-block px-10 py-4 border border-white/25 text-white text-[11px] tracking-[0.3em] uppercase font-semibold hover:border-[#B8985A] hover:text-[#B8985A] transition-all"
+                >
+                  Voir le drop
+                </Link>
+              </div>
+            ) : (
+              // ── JEU ──
+              <div className="text-center">
+                <div className="flex items-center justify-center gap-2 mb-6">
+                  <span style={{ width: "20px", height: "1px", backgroundColor: "#B8985A" }} />
+                  <span style={{ width: "4px", height: "4px", backgroundColor: "#B8985A", borderRadius: "50%" }} />
+                  <span style={{ width: "20px", height: "1px", backgroundColor: "#B8985A" }} />
+                </div>
                 <p className="text-[10px] tracking-[0.4em] uppercase text-[#B8985A] mb-4 font-medium">
                   Drop 01 · Accès anticipé
                 </p>
-
                 <h1 className="text-3xl sm:text-4xl font-black tracking-tight leading-[0.95] mb-5">
                   L'ÉNIGME
                   <br />
                   <span className="text-white/35">DE LA GENÈSE.</span>
                 </h1>
-
                 <div className="w-12 h-px bg-[#B8985A] mx-auto mb-6" />
 
-                {/* ÉNONCÉ DE L'ÉNIGME (placeholder — à remplacer par ta vraie énigme) */}
                 <div className="bg-white/[0.03] border border-[#B8985A]/20 px-6 py-6 mb-8">
                   <p className="text-sm sm:text-[15px] text-white/80 leading-relaxed italic">
                     « Je suis le commencement de tout, gravé dans la pierre des origines.
@@ -104,13 +244,12 @@ export default function MiniJeuPage() {
                   <span className="text-[#B8985A]"> 400 pièces</span>. Les places sont limitées.
                 </p>
 
-                {/* FORMULAIRE */}
                 <form onSubmit={handleSubmit} className="space-y-5">
                   <input
                     type="text"
                     value={reponse}
                     onChange={(e) => setReponse(e.target.value)}
-                    disabled={bloque || isLoading}
+                    disabled={isLoading}
                     placeholder="Votre réponse..."
                     className="w-full bg-transparent border-b border-white/25 px-1 py-3 text-center text-base text-white placeholder:text-white/30 focus:outline-none focus:border-[#B8985A] transition-colors disabled:opacity-40"
                   />
@@ -121,88 +260,32 @@ export default function MiniJeuPage() {
                     </div>
                   )}
 
-                  {!bloque && (
-                    <button
-                      type="submit"
-                      disabled={isLoading || !reponse.trim()}
-                      className={`w-full py-4 text-[11px] tracking-[0.3em] uppercase font-semibold transition-all ${
-                        isLoading || !reponse.trim()
-                          ? "bg-white/10 text-white/40 cursor-not-allowed"
-                          : "bg-[#B8985A] text-[#0A0A0A] hover:bg-[#C9A96B]"
-                      }`}
-                      style={{ border: "none" }}
-                    >
-                      {isLoading ? "Vérification..." : "Valider ma réponse"}
-                    </button>
-                  )}
+                  <button
+                    type="submit"
+                    disabled={isLoading || !reponse.trim()}
+                    className={`w-full py-4 text-[11px] tracking-[0.3em] uppercase font-semibold transition-all ${
+                      isLoading || !reponse.trim()
+                        ? "bg-white/10 text-white/40 cursor-not-allowed"
+                        : "bg-[#B8985A] text-[#0A0A0A] hover:bg-[#C9A96B]"
+                    }`}
+                    style={{ border: "none" }}
+                  >
+                    {isLoading ? "Vérification..." : "Valider ma réponse"}
+                  </button>
 
-                  {/* Indicateur d'essais */}
-                  {!bloque && (
-                    <div className="flex items-center justify-center gap-2 pt-1">
-                      {Array.from({ length: MAX_ESSAIS }).map((_, i) => (
-                        <span
-                          key={i}
-                          className="w-2 h-2 rounded-full transition-colors"
-                          style={{
-                            backgroundColor:
-                              i < essaisRestants ? "#B8985A" : "rgba(255,255,255,0.15)",
-                          }}
-                        />
-                      ))}
-                    </div>
-                  )}
-
-                  {bloque && (
-                    <Link
-                      href="/"
-                      className="inline-block mt-2 text-[11px] tracking-[0.2em] uppercase text-white/60 hover:text-[#B8985A] transition-colors"
-                    >
-                      Retour à l'accueil
-                    </Link>
-                  )}
+                  <div className="flex items-center justify-center gap-2 pt-1">
+                    {Array.from({ length: MAX_ESSAIS }).map((_, i) => (
+                      <span
+                        key={i}
+                        className="w-2 h-2 rounded-full transition-colors"
+                        style={{
+                          backgroundColor:
+                            i < essaisRestants ? "#B8985A" : "rgba(255,255,255,0.15)",
+                        }}
+                      />
+                    ))}
+                  </div>
                 </form>
-              </div>
-            ) : (
-              // ── ÉCRAN DE VICTOIRE ──
-              <div className="text-center">
-                <div className="flex items-center justify-center gap-2 mb-6">
-                  <span style={{ width: "20px", height: "1px", backgroundColor: "#B8985A" }} />
-                  <span style={{ width: "4px", height: "4px", backgroundColor: "#B8985A", borderRadius: "50%" }} />
-                  <span style={{ width: "20px", height: "1px", backgroundColor: "#B8985A" }} />
-                </div>
-
-                <div
-                  className="w-16 h-16 mx-auto mb-6 rounded-full flex items-center justify-center"
-                  style={{ backgroundColor: "rgba(184, 152, 90, 0.12)", border: "1px solid #B8985A" }}
-                >
-                  <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#B8985A" strokeWidth="2">
-                    <polyline points="20 6 9 17 4 12" />
-                  </svg>
-                </div>
-
-                <p className="text-[10px] tracking-[0.4em] uppercase text-[#B8985A] mb-4 font-medium">
-                  Énigme résolue
-                </p>
-
-                <h1 className="text-3xl sm:text-4xl font-black tracking-tight leading-[0.95] mb-5">
-                  ACCÈS
-                  <br />
-                  <span className="text-white/35">DÉBLOQUÉ.</span>
-                </h1>
-
-                <div className="w-12 h-px bg-[#B8985A] mx-auto mb-6" />
-
-                <p className="text-sm text-white/70 leading-relaxed mb-8 max-w-sm mx-auto">
-                  Félicitations. Vous faites partie des rares à accéder à la pré-commande en
-                  avant-première.
-                </p>
-
-                <Link
-                  href="/precommande"
-                  className="inline-block px-10 py-4 bg-[#B8985A] text-[#0A0A0A] text-[11px] tracking-[0.3em] uppercase font-semibold hover:bg-[#C9A96B] transition-all"
-                >
-                  Accéder à la pré-commande
-                </Link>
               </div>
             )}
           </FadeIn>
