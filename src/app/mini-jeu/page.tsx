@@ -232,10 +232,17 @@ export default function MiniJeuPage() {
                 </h1>
                 <div className="w-12 h-px bg-[#B8985A] mx-auto mb-6" />
 
-                <div className="bg-white/[0.03] border border-[#B8985A]/20 px-6 py-6 mb-8">
-                  <p className="text-sm sm:text-[15px] text-white/80 leading-relaxed italic">
-                    « Je suis le commencement de tout, gravé dans la pierre des origines.
-                    Sans moi, rien ne naît. Quel est mon nom ? »
+                <div className="bg-white/[0.03] border border-[#B8985A]/20 px-6 py-6 mb-8 text-left">
+                  <p className="text-sm sm:text-[15px] text-white/80 leading-relaxed italic mb-4">
+                    « Une étoile guide ceux qui savent où regarder. Elle ne brille
+                    pas dans le ciel, mais dans les trois visages de la Maison. »
+                  </p>
+                  <p className="text-xs text-white/50 leading-relaxed">
+                    Trois fragments sont dissimulés à travers Northstone — un dans
+                    l'univers du <span className="text-[#B8985A]">Drop</span>, un chez
+                    l'<span className="text-[#B8985A]">Homme</span>, un chez la{" "}
+                    <span className="text-[#B8985A]">Femme</span>. Réunissez-les dans
+                    l'ordre pour révéler le nom de l'étoile qui guide.
                   </p>
                 </div>
 
