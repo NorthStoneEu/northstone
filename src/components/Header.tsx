@@ -457,11 +457,24 @@ export default function Header() {
             isMenuOpen ? "translate-x-0" : "translate-x-full"
           }`}
         >
-          <div className="pt-24 px-8 pb-8 h-full flex flex-col overflow-y-auto">
+          <div className="pt-[15px] px-8 pb-4 h-full flex flex-col overflow-y-auto">
+
+            {/* Bouton fermer dédié (haut droite du panneau) */}
+            <button
+              onClick={() => setIsMenuOpen(false)}
+              className="absolute top-4 right-5 text-[#1A2332] hover:text-[#B8985A] transition-colors z-10"
+              aria-label="Fermer le menu"
+              style={{ background: "transparent", border: "none", cursor: "pointer" }}
+            >
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                <line x1="6" y1="6" x2="18" y2="18" />
+                <line x1="18" y1="6" x2="6" y2="18" />
+              </svg>
+            </button>
 
             {/* === BLOC USER CONNECTÉ (mobile) === */}
             {isSignedIn && (
-              <div className="mb-6 pb-6 border-b border-[#1A2332]/10">
+              <div className="mb-4 pb-4 border-b border-[#1A2332]/10">
                 <div className="flex items-center gap-3 mb-1">
                   <div className="w-10 h-10 rounded-full bg-[#1A2332] text-[#B8985A] flex items-center justify-center text-xs font-semibold">
                     {getInitials()}
@@ -479,6 +492,9 @@ export default function Header() {
             )}
 
             {/* Navigation principale avec accordéons */}
+            <p className="text-[10px] tracking-[0.3em] uppercase text-[#1A2332]/50 mb-3">
+              Navigation
+            </p>
             <nav className="flex flex-col">
               {navLinksMain.map((link) => (
                 <div key={link.href} className="border-b border-[#1A2332]/10">
@@ -490,7 +506,7 @@ export default function Header() {
                             openMobileAccordion === link.label ? null : link.label
                           )
                         }
-                        className="w-full flex items-center justify-between py-4 text-2xl font-black tracking-tight text-[#1A2332] hover:text-[#B8985A] transition-colors duration-300"
+                        className="w-full flex items-center justify-between py-3.5 text-lg font-black tracking-tight text-[#1A2332] hover:text-[#B8985A] transition-colors duration-300"
                       >
                         <span>{link.label.toUpperCase()}</span>
                         <svg
@@ -533,7 +549,7 @@ export default function Header() {
                   ) : (
                     <Link
                       href={link.href}
-                      className="block py-4 text-2xl font-black tracking-tight text-[#1A2332] hover:text-[#B8985A] transition-colors duration-300"
+                      className="block py-3.5 text-lg font-black tracking-tight text-[#1A2332] hover:text-[#B8985A] transition-colors duration-300"
                       onClick={() => setIsMenuOpen(false)}
                     >
                       {link.label.toUpperCase()}
@@ -547,7 +563,7 @@ export default function Header() {
                 <div className="border-b border-[#1A2332]/10">
                   <Link
                     href="/sign-in"
-                    className="block py-4 text-2xl font-black tracking-tight text-[#1A2332] hover:text-[#B8985A] transition-colors duration-300"
+                    className="block py-3.5 text-lg font-black tracking-tight text-[#1A2332] hover:text-[#B8985A] transition-colors duration-300"
                     onClick={() => setIsMenuOpen(false)}
                   >
                     COMPTE
@@ -558,10 +574,13 @@ export default function Header() {
               {/* === COMPTE MOBILE (connecté) === */}
               {isSignedIn && (
                 <>
+                  <p className="text-[10px] tracking-[0.3em] uppercase text-[#1A2332]/50 mt-8 mb-3">
+                    Mon espace
+                  </p>
                   <div className="border-b border-[#1A2332]/10">
                     <Link
                       href="/compte"
-                      className="flex items-center gap-3 py-4 text-base text-[#1A2332] hover:text-[#B8985A] transition-colors duration-300"
+                      className="flex items-center gap-3 py-3.5 text-sm text-[#1A2332] hover:text-[#B8985A] transition-colors duration-300"
                       onClick={() => setIsMenuOpen(false)}
                     >
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
@@ -574,7 +593,7 @@ export default function Header() {
                   <div className="border-b border-[#1A2332]/10">
                     <Link
                       href="/commandes"
-                      className="flex items-center gap-3 py-4 text-base text-[#1A2332] hover:text-[#B8985A] transition-colors duration-300"
+                      className="flex items-center gap-3 py-3.5 text-sm text-[#1A2332] hover:text-[#B8985A] transition-colors duration-300"
                       onClick={() => setIsMenuOpen(false)}
                     >
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
@@ -588,7 +607,7 @@ export default function Header() {
                   <div className="border-b border-[#1A2332]/10">
                     <Link
                       href="/favoris"
-                      className="flex items-center gap-3 py-4 text-base text-[#1A2332] hover:text-[#B8985A] transition-colors duration-300"
+                      className="flex items-center gap-3 py-3.5 text-sm text-[#1A2332] hover:text-[#B8985A] transition-colors duration-300"
                       onClick={() => setIsMenuOpen(false)}
                     >
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
@@ -600,7 +619,7 @@ export default function Header() {
                   <div className="border-b border-[#1A2332]/10">
                     <button
                       onClick={handleSignOut}
-                      className="w-full flex items-center gap-3 py-4 text-base text-[#1A2332] hover:text-red-700 transition-colors duration-300"
+                      className="w-full flex items-center gap-3 py-3.5 text-sm text-[#1A2332] hover:text-red-700 transition-colors duration-300"
                     >
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                         <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
@@ -616,7 +635,7 @@ export default function Header() {
 
             {/* Liens sociaux */}
             <div className="flex flex-col gap-3 mt-8">
-              <p className="text-[10px] tracking-[0.3em] uppercase text-[#1A2332]/50 mb-2">
+              <p className="text-[10px] tracking-[0.3em] uppercase text-[#1A2332]/50 mb-3">
                 Suivre
               </p>
               {socialLinks.map((link) => (

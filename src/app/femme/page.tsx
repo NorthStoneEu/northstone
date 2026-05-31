@@ -414,7 +414,10 @@ export default function FemmePage() {
 
           <div className="px-6 py-4 border-t border-[#1A2332]/10">
             <button
-              onClick={() => setIsMobileFilterOpen(false)}
+              onClick={() => {
+                handleApplyPrice();
+                setIsMobileFilterOpen(false);
+              }}
               className="w-full bg-black text-[#B8985A] border border-black py-3 text-[11px] tracking-[0.2em] uppercase font-semibold hover:bg-[#1F1F1F] transition-all"
             >
               Voir {filteredProducts.length} pièce{filteredProducts.length > 1 ? "s" : ""}
