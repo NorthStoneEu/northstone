@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Header from "@/components/Header";
 import AnnouncementBar from "@/components/AnnouncementBar";
@@ -183,9 +184,27 @@ function FilterPanel({
   );
 }
 
-// COMPOSANT PRINCIPAL
-export default function HommePage() {
+// CONTENU (utilise useSearchParams, doit être dans un Suspense)
+function HommeContent() {
+  const searchParams = useSearchParams();
   const [selectedCategory, setSelectedCategory] = useState("Tous");
+
+  // Lire le paramètre ?cat= de l'URL et matcher avec la liste (insensible casse/accents)
+  useEffect(() => {
+    const catParam = searchParams.get("cat");
+    if (!catParam) {
+      setSelectedCategory("Tous");
+      return;
+    }
+    const normalize = (s: string) =>
+      s
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/[-\s]/g, "");
+    const match = categories.find((c) => normalize(c) === normalize(catParam));
+    setSelectedCategory(match || "Tous");
+  }, [searchParams]);
   const [sortBy, setSortBy] = useState("Nouveautés");
   const [minPriceInput, setMinPriceInput] = useState("");
   const [maxPriceInput, setMaxPriceInput] = useState("");
@@ -453,5 +472,14 @@ export default function HommePage() {
 
       <Footer />
     </>
+  );
+}
+
+// COMPOSANT PRINCIPAL (enveloppe dans Suspense pour useSearchParams)
+export default function HommePage() {
+  return (
+    <Suspense fallback={null}>
+      <HommeContent />
+    </Suspense>
   );
 }

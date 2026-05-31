@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Header from "@/components/Header";
 import AnnouncementBar from "@/components/AnnouncementBar";
@@ -60,6 +61,7 @@ function FilterPanel({
   appliedMinPrice,
   appliedMaxPrice,
   handleApplyPrice,
+  handleApplyWithEffect,
   handleResetPrice,
 }: any) {
   return (
@@ -112,30 +114,32 @@ function FilterPanel({
               type="number"
               placeholder="Max"
               value={maxPriceInput}
+              min={minPriceInput || undefined}
               onChange={(e) => setMaxPriceInput(e.target.value)}
+              onBlur={(e) => {
+                const min = minPriceInput === "" ? 0 : Number(minPriceInput);
+                const max = e.target.value === "" ? null : Number(e.target.value);
+                if (max !== null && max < min) {
+                  setMaxPriceInput(String(min));
+                }
+              }}
               className="w-full bg-transparent border border-[#1A2332]/20 px-2 py-1.5 pr-5 text-xs text-[#1A2332] placeholder:text-[#1A2332]/40 focus:outline-none focus:border-[#B8985A] transition-colors"
             />
             <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-[#1A2332]/50">€</span>
           </div>
         </div>
 
-        <div className="flex gap-2">
-          <button
-            onClick={handleApplyPrice}
-            className="flex-1 bg-black text-[#B8985A] border border-black py-2 text-[10px] tracking-[0.2em] uppercase font-semibold hover:bg-[#1F1F1F] hover:border-[#1F1F1F] transition-all"
-          >
-            Appliquer
-          </button>
-          {(appliedMinPrice > 0 || appliedMaxPrice < 9999) && (
+        {(appliedMinPrice > 0 || appliedMaxPrice < 9999) && (
+          <div className="flex justify-end">
             <button
               onClick={handleResetPrice}
-              className="px-3 text-[10px] tracking-[0.2em] uppercase text-[#1A2332]/60 hover:text-[#1A2332] transition-colors border border-[#1A2332]/20 hover:border-[#1A2332]"
-              aria-label="Réinitialiser"
+              className="px-3 py-1.5 text-[10px] tracking-[0.2em] uppercase text-[#1A2332]/60 hover:text-[#1A2332] transition-colors border border-[#1A2332]/20 hover:border-[#1A2332]"
+              aria-label="Réinitialiser le prix"
             >
-              ✕
+              Réinitialiser
             </button>
-          )}
-        </div>
+          </div>
+        )}
 
         {(appliedMinPrice > 0 || appliedMaxPrice < 9999) && (
           <p className="text-[10px] text-[#B8985A] mt-2">
@@ -167,12 +171,23 @@ function FilterPanel({
           ))}
         </ul>
       </div>
+
+      {/* Bouton Appliquer (desktop) */}
+      <div className="hidden lg:block pt-4 border-t border-[#1A2332]/10">
+        <button
+          onClick={handleApplyWithEffect}
+          className="w-full bg-black text-[#B8985A] border border-black py-3 text-[11px] tracking-[0.2em] uppercase font-semibold hover:bg-[#1F1F1F] transition-all"
+        >
+          Appliquer
+        </button>
+      </div>
     </div>
   );
 }
 
-// COMPOSANT PRINCIPAL
-export default function FemmePage() {
+// CONTENU (utilise useSearchParams, doit être dans un Suspense)
+function FemmeContent() {
+  const searchParams = useSearchParams();
   const [selectedCategory, setSelectedCategory] = useState("Tous");
   const [sortBy, setSortBy] = useState("Nouveautés");
   const [minPriceInput, setMinPriceInput] = useState("");
@@ -180,6 +195,24 @@ export default function FemmePage() {
   const [appliedMinPrice, setAppliedMinPrice] = useState(0);
   const [appliedMaxPrice, setAppliedMaxPrice] = useState(9999);
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
+  const [isFiltering, setIsFiltering] = useState(false);
+
+  // Lire le paramètre ?cat= de l'URL et matcher avec la liste (insensible casse/accents/tirets)
+  useEffect(() => {
+    const catParam = searchParams.get("cat");
+    if (!catParam) {
+      setSelectedCategory("Tous");
+      return;
+    }
+    const normalize = (s: string) =>
+      s
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/[-\s]/g, "");
+    const match = categories.find((c) => normalize(c) === normalize(catParam));
+    setSelectedCategory(match || "Tous");
+  }, [searchParams]);
 
   useEffect(() => {
     if (isMobileFilterOpen) {
@@ -197,6 +230,14 @@ export default function FemmePage() {
     const max = maxPriceInput === "" ? 9999 : Number(maxPriceInput);
     setAppliedMinPrice(min);
     setAppliedMaxPrice(max);
+  };
+
+  // Applique le filtre avec effet de fondu + scroll (style Ralph Lauren)
+  const handleApplyWithEffect = () => {
+    setIsFiltering(true);
+    handleApplyPrice();
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    setTimeout(() => setIsFiltering(false), 350);
   };
 
   const handleResetPrice = () => {
@@ -232,6 +273,7 @@ export default function FemmePage() {
     appliedMinPrice,
     appliedMaxPrice,
     handleApplyPrice,
+    handleApplyWithEffect,
     handleResetPrice,
   };
 
@@ -276,7 +318,7 @@ export default function FemmePage() {
           <div className="grid grid-cols-1 lg:grid-cols-[240px_1fr] gap-8 lg:gap-12">
 
             {/* SIDEBAR DESKTOP */}
-            <aside className="hidden lg:block lg:sticky lg:top-20 lg:self-start">
+            <aside className="hidden lg:block">
               <FadeIn direction="up">
                 <FilterPanel {...filterProps} />
               </FadeIn>
@@ -307,7 +349,10 @@ export default function FemmePage() {
                   Aucune pièce ne correspond à votre sélection.
                 </div>
               ) : (
-                <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 md:gap-6">
+                <div
+                  className="grid grid-cols-2 lg:grid-cols-3 gap-3 md:gap-6 transition-opacity duration-300"
+                  style={{ opacity: isFiltering ? 0 : 1 }}
+                >
                   {filteredProducts.map((product) => (
                     <Link
                       key={product.id}
@@ -415,12 +460,12 @@ export default function FemmePage() {
           <div className="px-6 py-4 border-t border-[#1A2332]/10">
             <button
               onClick={() => {
-                handleApplyPrice();
                 setIsMobileFilterOpen(false);
+                handleApplyWithEffect();
               }}
               className="w-full bg-black text-[#B8985A] border border-black py-3 text-[11px] tracking-[0.2em] uppercase font-semibold hover:bg-[#1F1F1F] transition-all"
             >
-              Voir {filteredProducts.length} pièce{filteredProducts.length > 1 ? "s" : ""}
+              Appliquer
             </button>
           </div>
         </div>
@@ -428,5 +473,14 @@ export default function FemmePage() {
 
       <Footer />
     </>
+  );
+}
+
+// COMPOSANT PRINCIPAL (enveloppe dans Suspense pour useSearchParams)
+export default function FemmePage() {
+  return (
+    <Suspense fallback={null}>
+      <FemmeContent />
+    </Suspense>
   );
 }
