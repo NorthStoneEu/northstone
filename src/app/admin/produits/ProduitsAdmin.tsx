@@ -15,10 +15,14 @@ type Product = {
   colors: string[];
 };
 
+const categoriesHomme = ["Polos", "T-shirts", "Chemises", "Sweats", "Pulls", "Pantalons", "Vestes"];
+const categoriesFemme = ["Robes", "T-shirts", "Chemisiers", "Pulls", "Pantalons", "Vestes", "Accessoires"];
+
 export default function ProduitsAdmin() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [filtreGenre, setFiltreGenre] = useState<"tous" | "homme" | "femme">("tous");
+  const [filtreCategorie, setFiltreCategorie] = useState<string>("Toutes");
 
   const chargerProduits = () => {
     setLoading(true);
@@ -35,6 +39,11 @@ export default function ProduitsAdmin() {
     chargerProduits();
   }, []);
 
+  const changerGenre = (g: "tous" | "homme" | "femme") => {
+    setFiltreGenre(g);
+    setFiltreCategorie("Toutes");
+  };
+
   const supprimer = async (id: number, nom: string) => {
     if (!confirm(`Supprimer "${nom}" ? Cette action est définitive.`)) return;
     const res = await fetch(`/api/admin/produits?id=${id}`, { method: "DELETE" });
@@ -45,13 +54,17 @@ export default function ProduitsAdmin() {
     }
   };
 
-  const produitsFiltres = products.filter((p) =>
-    filtreGenre === "tous" ? true : p.gender === filtreGenre
-  );
+  const categoriesDisponibles =
+    filtreGenre === "homme" ? categoriesHomme : filtreGenre === "femme" ? categoriesFemme : [];
+
+  const produitsFiltres = products.filter((p) => {
+    if (filtreGenre !== "tous" && p.gender !== filtreGenre) return false;
+    if (filtreCategorie !== "Toutes" && p.category !== filtreCategorie) return false;
+    return true;
+  });
 
   return (
     <div className="min-h-screen bg-[#F5F1EA]">
-      {/* Barre admin */}
       <header className="bg-[#0A0A0A] text-white px-6 py-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Link href="/admin" className="text-lg font-black tracking-[0.2em] hover:text-[#B8985A] transition-colors">
@@ -85,11 +98,11 @@ export default function ProduitsAdmin() {
         </div>
 
         {/* Filtre genre */}
-        <div className="flex gap-2 mb-6">
+        <div className="flex gap-2 mb-4">
           {(["tous", "homme", "femme"] as const).map((g) => (
             <button
               key={g}
-              onClick={() => setFiltreGenre(g)}
+              onClick={() => changerGenre(g)}
               className={`px-4 py-2 text-[11px] tracking-[0.2em] uppercase font-semibold transition-all border ${
                 filtreGenre === g
                   ? "bg-[#1A2332] text-white border-[#1A2332]"
@@ -101,8 +114,39 @@ export default function ProduitsAdmin() {
           ))}
         </div>
 
+        {/* Filtre catégorie */}
+        {filtreGenre !== "tous" && (
+          <div className="flex flex-wrap gap-2 mb-6">
+            <button
+              onClick={() => setFiltreCategorie("Toutes")}
+              className={`px-3 py-1.5 text-[10px] tracking-[0.15em] uppercase font-semibold transition-all border ${
+                filtreCategorie === "Toutes"
+                  ? "bg-[#B8985A] text-white border-[#B8985A]"
+                  : "bg-transparent text-[#1A2332]/60 border-[#1A2332]/20 hover:border-[#1A2332]"
+              }`}
+            >
+              Toutes
+            </button>
+            {categoriesDisponibles.map((cat) => (
+              <button
+                key={cat}
+                onClick={() => setFiltreCategorie(cat)}
+                className={`px-3 py-1.5 text-[10px] tracking-[0.15em] uppercase font-semibold transition-all border ${
+                  filtreCategorie === cat
+                    ? "bg-[#B8985A] text-white border-[#B8985A]"
+                    : "bg-transparent text-[#1A2332]/60 border-[#1A2332]/20 hover:border-[#1A2332]"
+                }`}
+              >
+                {cat}
+              </button>
+            ))}
+          </div>
+        )}
+
         {loading ? (
           <p className="text-center py-20 text-[#1A2332]/40 text-sm">Chargement des produits...</p>
+        ) : produitsFiltres.length === 0 ? (
+          <p className="text-center py-20 text-[#1A2332]/40 text-sm">Aucun produit dans cette sélection.</p>
         ) : (
           <div className="bg-white border border-[#1A2332]/10 overflow-hidden">
             {produitsFiltres.map((p, i) => {
@@ -114,19 +158,16 @@ export default function ProduitsAdmin() {
                     i !== produitsFiltres.length - 1 ? "border-b border-[#1A2332]/10" : ""
                   }`}
                 >
-                  {/* Miniature */}
                   <div
                     className="w-12 h-16 bg-[#EFE9DC] bg-cover bg-center flex-shrink-0"
                     style={firstImage ? { backgroundImage: `url('${firstImage}')` } : {}}
                   />
-                  {/* Infos */}
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold text-[#1A2332] truncate">{p.name}</p>
                     <p className="text-xs text-[#1A2332]/50">
                       {p.category} · {p.gender} · {p.price}€ {p.is_new && "· Nouveau"}
                     </p>
                   </div>
-                  {/* Actions */}
                   <div className="flex gap-2 flex-shrink-0">
                     <Link
                       href={`/admin/produits/${p.id}`}
