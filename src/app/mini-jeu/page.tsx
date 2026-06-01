@@ -3,6 +3,8 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useUser } from "@clerk/nextjs";
+import Cadenas from "@/components/Cadenas";
+import Revelateur from "@/components/Revelateur";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import FadeIn from "@/components/FadeIn";
@@ -12,7 +14,6 @@ const MAX_ESSAIS = 3;
 export default function MiniJeuPage() {
   const { isSignedIn, isLoaded } = useUser();
 
-  const [reponse, setReponse] = useState("");
   const [essaisRestants, setEssaisRestants] = useState(MAX_ESSAIS);
   const [isLoading, setIsLoading] = useState(false);
   const [erreur, setErreur] = useState<string | null>(null);
@@ -37,9 +38,8 @@ export default function MiniJeuPage() {
       .catch(() => {});
   }, [isLoaded, isSignedIn]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (isLoading || failed || !reponse.trim()) return;
+  const handleSubmit = async (code: string) => {
+    if (isLoading || failed) return;
 
     setErreur(null);
     setIsLoading(true);
@@ -48,7 +48,7 @@ export default function MiniJeuPage() {
       const res = await fetch("/api/verifier-enigme", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ reponse }),
+        body: JSON.stringify({ reponse: code }),
       });
       const data = await res.json();
 
@@ -58,13 +58,11 @@ export default function MiniJeuPage() {
         setFailed(true);
         setEssaisRestants(0);
         setErreur("Vous avez épuisé vos tentatives pour ce drop.");
-        setReponse("");
       } else {
         setEssaisRestants(data.attemptsLeft);
         setErreur(
           `Mauvaise réponse. ${data.attemptsLeft} essai${data.attemptsLeft > 1 ? "s" : ""} restant${data.attemptsLeft > 1 ? "s" : ""}.`
         );
-        setReponse("");
       }
     } catch {
       setErreur("Une erreur est survenue. Réessayez.");
@@ -232,53 +230,40 @@ export default function MiniJeuPage() {
                 </h1>
                 <div className="w-12 h-px bg-[#B8985A] mx-auto mb-6" />
 
-                <div className="bg-white/[0.03] border border-[#B8985A]/20 px-6 py-6 mb-8 text-left">
-                  <p className="text-sm sm:text-[15px] text-white/80 leading-relaxed italic mb-4">
-                    « Une étoile guide ceux qui savent où regarder. Elle ne brille
-                    pas dans le ciel, mais dans les trois visages de la Maison. »
-                  </p>
-                  <p className="text-xs text-white/50 leading-relaxed">
-                    Trois fragments sont dissimulés à travers Northstone — un dans
-                    l'univers du <span className="text-[#B8985A]">Drop</span>, un chez
-                    l'<span className="text-[#B8985A]">Homme</span>, un chez la{" "}
-                    <span className="text-[#B8985A]">Femme</span>. Réunissez-les dans
-                    l'ordre pour révéler le nom de l'étoile qui guide.
-                  </p>
-                </div>
-
-                <p className="text-xs text-white/50 leading-relaxed mb-8 max-w-sm mx-auto">
+                <p className="text-xs text-white/50 leading-relaxed mb-6 max-w-sm mx-auto">
                   Résolvez l'énigme pour débloquer votre accès anticipé à la pré-commande des
                   <span className="text-[#B8985A]"> 400 pièces</span>. Les places sont limitées.
                 </p>
 
-                <form onSubmit={handleSubmit} className="space-y-5">
-                  <input
-                    type="text"
-                    value={reponse}
-                    onChange={(e) => setReponse(e.target.value)}
-                    disabled={isLoading}
-                    placeholder="Votre réponse..."
-                    className="w-full bg-transparent border-b border-white/25 px-1 py-3 text-center text-base text-white placeholder:text-white/30 focus:outline-none focus:border-[#B8985A] transition-colors disabled:opacity-40"
-                  />
+                {/* L'énigme cryptique */}
+                <div className="bg-white/[0.03] border border-[#B8985A]/20 px-6 py-6 mb-8">
+                  <p className="text-sm sm:text-[15px] text-white/80 leading-relaxed italic mb-3">
+                    « Je suis une constellation, le Chasseur du ciel d'hiver.
+                    Trois étoiles alignées forment ma ceinture, et Bételgeuse
+                    brûle à mon épaule. »
+                  </p>
+                  <p className="text-xs text-white/50 leading-relaxed">
+                    Éclairez les ténèbres pour révéler les lettres de mon nom,
+                    puis composez-le sur le cadenas.
+                  </p>
+                </div>
+
+                <div className="space-y-6">
+                  {/* Le révélateur (lampe torche) */}
+                  <Revelateur />
+
+                  <p className="text-[11px] text-white/40 tracking-wide">
+                    Promenez la lumière sur l'obscurité pour révéler les lettres dispersées,
+                    puis composez le nom sur le cadenas.
+                  </p>
+
+                  <Cadenas longueur={5} onSubmit={handleSubmit} disabled={isLoading} />
 
                   {erreur && (
-                    <div className="text-[12px] text-[#E8A0A0] bg-[#E8A0A0]/10 border-l-2 border-[#E8A0A0]/50 px-3 py-2.5 text-left">
+                    <div className="text-[12px] text-[#E8A0A0] bg-[#E8A0A0]/10 border-l-2 border-[#E8A0A0]/50 px-3 py-2.5 text-left max-w-sm mx-auto">
                       {erreur}
                     </div>
                   )}
-
-                  <button
-                    type="submit"
-                    disabled={isLoading || !reponse.trim()}
-                    className={`w-full py-4 text-[11px] tracking-[0.3em] uppercase font-semibold transition-all ${
-                      isLoading || !reponse.trim()
-                        ? "bg-white/10 text-white/40 cursor-not-allowed"
-                        : "bg-[#B8985A] text-[#0A0A0A] hover:bg-[#C9A96B]"
-                    }`}
-                    style={{ border: "none" }}
-                  >
-                    {isLoading ? "Vérification..." : "Valider ma réponse"}
-                  </button>
 
                   <div className="flex items-center justify-center gap-2 pt-1">
                     {Array.from({ length: MAX_ESSAIS }).map((_, i) => (
@@ -292,7 +277,7 @@ export default function MiniJeuPage() {
                       />
                     ))}
                   </div>
-                </form>
+                </div>
               </div>
             )}
           </FadeIn>

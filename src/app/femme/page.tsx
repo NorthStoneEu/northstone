@@ -8,7 +8,6 @@ import AnnouncementBar from "@/components/AnnouncementBar";
 import Footer from "@/components/Footer";
 import FadeIn from "@/components/FadeIn";
 import { products as allProducts } from "@/data/products";
-import FragmentIndice from "@/components/FragmentIndice";
 
 // Mappage des noms de couleurs vers leurs valeurs hexadécimales
 const colorMap: Record<string, string> = {
@@ -309,9 +308,6 @@ function FemmeContent() {
             <p className="text-xs sm:text-base text-white/70 max-w-lg mx-auto leading-relaxed">
               Élégance moderne, savoir-faire européen, pièces brodées d'exception.
             </p>
-            <div className="mt-6 flex justify-center">
-              <FragmentIndice fragment="IS" ordre={3} />
-            </div>
           </FadeIn>
         </div>
       </section>
