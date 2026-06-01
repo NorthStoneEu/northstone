@@ -7,7 +7,7 @@ import Header from "@/components/Header";
 import AnnouncementBar from "@/components/AnnouncementBar";
 import Footer from "@/components/Footer";
 import FadeIn from "@/components/FadeIn";
-import { getProductBySlug, getSimilarProducts } from "@/data/products";
+import { getProductBySlug, getSimilarProducts, type Product } from "@/data/catalog";
 import { useCart } from "@/context/CartContext";
 
 const colorMap: Record<string, string> = {
@@ -24,6 +24,7 @@ const colorMap: Record<string, string> = {
   "Kaki": "#5C5D3D",
   "Vert forêt": "#1F3D2E",
   "Cognac": "#8B5A3C",
+  "Rose poudré": "#E8C5C5",
 };
 
 function getColorValue(colorName: string): string {
@@ -32,18 +33,52 @@ function getColorValue(colorName: string): string {
 
 export default function ProductPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = use(params);
-  const product = getProductBySlug(slug, "homme");
+  const [product, setProduct] = useState<Product | null>(null);
+  const [similar, setSimilar] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [notFoundFlag, setNotFoundFlag] = useState(false);
 
-  if (!product) {
+  useEffect(() => {
+    let active = true;
+    getProductBySlug(slug, "femme").then(async (p) => {
+      if (!active) return;
+      if (!p) {
+        setNotFoundFlag(true);
+        setLoading(false);
+        return;
+      }
+      setProduct(p);
+      const sim = await getSimilarProducts(p.id, p.category, "femme", 4);
+      if (!active) return;
+      setSimilar(sim);
+      setLoading(false);
+    });
+    return () => {
+      active = false;
+    };
+  }, [slug]);
+
+  if (notFoundFlag) {
     notFound();
   }
 
-  const similar = getSimilarProducts(product.id, product.category, "homme", 4);
+  if (loading || !product) {
+    return (
+      <>
+        <Header />
+        <AnnouncementBar />
+        <div className="bg-[#F5F1EA] min-h-[60vh] flex items-center justify-center text-[#1A2332]/40 text-sm">
+          Chargement...
+        </div>
+        <Footer />
+      </>
+    );
+  }
 
   return <ProductDetail product={product} similar={similar} />;
 }
 
-function ProductDetail({ product, similar }: { product: any; similar: any[] }) {
+function ProductDetail({ product, similar }: { product: Product; similar: Product[] }) {
   const { addItem, openCart } = useCart();
   const [selectedColor, setSelectedColor] = useState(product.colors[0]);
   const [selectedImage, setSelectedImage] = useState(0);
@@ -53,7 +88,7 @@ function ProductDetail({ product, similar }: { product: any; similar: any[] }) {
   const [isZooming, setIsZooming] = useState(false);
   const [zoomPosition, setZoomPosition] = useState({ x: 50, y: 50 });
 
-  const currentImages = product.imagesByColor[selectedColor] || product.imagesByColor[product.colors[0]];
+  const currentImages = product.imagesByColor[selectedColor] || product.imagesByColor[product.colors[0]] || [];
 
   useEffect(() => {
     setSelectedImage(0);
@@ -68,17 +103,16 @@ function ProductDetail({ product, similar }: { product: any; similar: any[] }) {
     addItem({
       productId: product.id,
       slug: product.slug,
-      gender: "homme",
+      gender: "femme",
       name: product.name,
       price: product.price,
       color: selectedColor,
       size: selectedSize,
-      image: currentImages[0],
+      image: currentImages[0] || "",
     });
     openCart();
   };
 
-  // Gestion du zoom au survol (desktop uniquement)
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
     const x = ((e.clientX - rect.left) / rect.width) * 100;
@@ -91,28 +125,24 @@ function ProductDetail({ product, similar }: { product: any; similar: any[] }) {
       <Header />
       <AnnouncementBar />
 
-      {/* FIL D'ARIANE */}
       <div className="bg-[#F5F1EA] px-4 sm:px-6 pt-6 pb-2">
         <div className="max-w-7xl mx-auto">
           <nav className="flex items-center gap-2 text-[10px] tracking-[0.15em] uppercase text-[#1A2332]/60">
             <Link href="/" className="hover:text-[#B8985A] transition-colors">Accueil</Link>
             <span>/</span>
-            <Link href="/homme" className="hover:text-[#B8985A] transition-colors">Homme</Link>
+            <Link href="/femme" className="hover:text-[#B8985A] transition-colors">Femme</Link>
             <span>/</span>
             <span className="text-[#1A2332]">{product.name}</span>
           </nav>
         </div>
       </div>
 
-      {/* PRODUIT PRINCIPAL */}
       <section className="bg-[#F5F1EA] px-4 sm:px-6 py-6 md:py-10">
         <div className="max-w-7xl mx-auto">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16">
 
-            {/* COLONNE GAUCHE : GALERIE */}
             <div>
               <div className="flex gap-3 md:gap-4">
-                {/* Miniatures verticales (desktop) */}
                 <div className="hidden md:flex flex-col gap-3 w-20">
                   {currentImages.map((img: string, i: number) => (
                     <button
@@ -131,7 +161,6 @@ function ProductDetail({ product, similar }: { product: any; similar: any[] }) {
                   ))}
                 </div>
 
-                {/* Image principale avec zoom */}
                 <div className="flex-1">
                   <div
                     className="relative aspect-[3/4] w-full max-h-[55vh] md:max-h-none mx-auto overflow-hidden bg-[#EFE9DC] group"
@@ -143,7 +172,7 @@ function ProductDetail({ product, similar }: { product: any; similar: any[] }) {
                       key={`${selectedColor}-${selectedImage}`}
                       className="absolute inset-0 bg-cover bg-center transition-all duration-500"
                       style={{
-                        backgroundImage: `url('${currentImages[selectedImage]}')`,
+                        backgroundImage: `url('${currentImages[selectedImage] || ""}')`,
                         transform: isZooming ? "scale(1.5)" : "scale(1)",
                         transformOrigin: `${zoomPosition.x}% ${zoomPosition.y}%`,
                       }}
@@ -156,7 +185,6 @@ function ProductDetail({ product, similar }: { product: any; similar: any[] }) {
                       </div>
                     )}
 
-                    {/* Bouton favoris discret en haut à droite */}
                     <button
                       onClick={() => setIsFavorite(!isFavorite)}
                       className="absolute top-3 right-3 sm:top-4 sm:right-4 w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white/90 backdrop-blur-sm flex items-center justify-center hover:bg-white transition-colors z-10"
@@ -175,7 +203,6 @@ function ProductDetail({ product, similar }: { product: any; similar: any[] }) {
                       </svg>
                     </button>
 
-                    {/* Indicateur "1/4" en bas à droite */}
                     {currentImages.length > 1 && (
                       <div className="absolute bottom-3 right-3 sm:bottom-4 sm:right-4 bg-black/60 backdrop-blur-sm text-white px-2 py-1 sm:px-3 sm:py-1.5 text-[9px] sm:text-[10px] tracking-[0.2em] font-semibold z-10">
                         {selectedImage + 1} / {currentImages.length}
@@ -185,7 +212,6 @@ function ProductDetail({ product, similar }: { product: any; similar: any[] }) {
                 </div>
               </div>
 
-              {/* Miniatures mobiles (sous l'image) */}
               <div className="md:hidden grid grid-cols-4 gap-2 mt-3">
                 {currentImages.map((img: string, i: number) => (
                   <button
@@ -205,7 +231,6 @@ function ProductDetail({ product, similar }: { product: any; similar: any[] }) {
               </div>
             </div>
 
-            {/* COLONNE DROITE : INFOS (plus de sticky, scroll naturel) */}
             <div>
               <FadeIn direction="up">
                 <p className="text-[10px] tracking-[0.3em] uppercase text-[#B8985A] mb-2">
@@ -223,7 +248,6 @@ function ProductDetail({ product, similar }: { product: any; similar: any[] }) {
                   {product.description}
                 </p>
 
-                {/* Sélection couleur */}
                 <div className="mb-6">
                   <div className="flex items-center justify-between mb-3">
                     <p className="text-[10px] tracking-[0.2em] uppercase text-[#1A2332] font-semibold">
@@ -249,7 +273,6 @@ function ProductDetail({ product, similar }: { product: any; similar: any[] }) {
                   </div>
                 </div>
 
-                {/* Sélection taille */}
                 <div className="mb-6">
                   <div className="flex items-center justify-between mb-3">
                     <p className="text-[10px] tracking-[0.2em] uppercase text-[#1A2332] font-semibold">
@@ -276,7 +299,6 @@ function ProductDetail({ product, similar }: { product: any; similar: any[] }) {
                   </div>
                 </div>
 
-                {/* Bouton AJOUTER AU PANIER */}
                 <button
                   onClick={handleAddToCart}
                   disabled={!selectedSize}
@@ -289,7 +311,6 @@ function ProductDetail({ product, similar }: { product: any; similar: any[] }) {
                   {selectedSize ? "Ajouter au panier" : "Sélectionnez une taille"}
                 </button>
 
-                {/* ACCORDÉONS */}
                 <div className="border-t border-[#1A2332]/10">
                   {[
                     { id: "composition", title: "Composition & Origine", content: product.composition },
@@ -336,7 +357,6 @@ function ProductDetail({ product, similar }: { product: any; similar: any[] }) {
         </div>
       </section>
 
-      {/* SECTION "VOUS AIMEREZ AUSSI" PLUS DISCRÈTE */}
       {similar.length > 0 && (
         <section className="bg-[#EFE9DC] py-10 md:py-14 px-4 sm:px-6">
           <div className="max-w-7xl mx-auto">
@@ -354,11 +374,11 @@ function ProductDetail({ product, similar }: { product: any; similar: any[] }) {
 
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6">
               {similar.map((p) => (
-                <Link key={p.id} href={`/homme/${p.slug}`} className="group block">
+                <Link key={p.id} href={`/femme/${p.slug}`} className="group block">
                   <div className="relative aspect-[3/4] w-full overflow-hidden bg-[#F5F1EA] mb-2 sm:mb-3">
                     <div
                       className="absolute inset-0 bg-cover bg-center transition-transform duration-700 ease-out group-hover:scale-105"
-                      style={{ backgroundImage: `url('${p.imagesByColor[p.colors[0]][0]}')` }}
+                      style={{ backgroundImage: `url('${p.imagesByColor[p.colors[0]]?.[0] || ""}')` }}
                       aria-hidden="true"
                     />
                     {p.isNew && (

@@ -7,7 +7,6 @@ const columns = [
       { label: "Homme", href: "/homme" },
       { label: "Femme", href: "/femme" },
       { label: "Drops", href: "/drops" },
-      { label: "Accessoires", href: "/accessoires" },
     ],
   },
   {
@@ -16,14 +15,12 @@ const columns = [
       { label: "Notre histoire", href: "/a-propos" },
       { label: "Savoir-faire", href: "/savoir-faire" },
       { label: "Authenticité", href: "/authenticite" },
-      { label: "Boutiques", href: "/boutiques" },
     ],
   },
   {
     title: "Aide",
     links: [
-      { label: "Livraison", href: "/livraison" },
-      { label: "Retours", href: "/retours" },
+      { label: "Livraison & Retours", href: "/livraison" },
       { label: "Contact", href: "/contact" },
       { label: "FAQ", href: "/faq" },
     ],

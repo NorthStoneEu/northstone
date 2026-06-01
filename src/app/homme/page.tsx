@@ -7,9 +7,8 @@ import Header from "@/components/Header";
 import AnnouncementBar from "@/components/AnnouncementBar";
 import Footer from "@/components/Footer";
 import FadeIn from "@/components/FadeIn";
-import { products as allProducts } from "@/data/products";
+import { getAllProducts, type Product } from "@/data/catalog";
 
-// Mappage des noms de couleurs vers leurs valeurs hexadécimales
 const colorMap: Record<string, string> = {
   "Noir": "#0A0A0A",
   "Blanc": "#FFFFFF",
@@ -30,24 +29,20 @@ function getColorValue(colorName: string): string {
   return colorMap[colorName] || "#9CA3AF";
 }
 
-// Construire la liste produits depuis le fichier de données partagé
-const products = allProducts
-  .filter((p) => p.gender === "homme")
-  .map((p) => ({
-    id: p.id,
-    name: p.name,
-    category: p.category,
-    price: p.price,
-    image: p.imagesByColor[p.colors[0]][0],
-    href: `/homme/${p.slug}`,
-    isNew: p.isNew,
-    colors: p.colors,
-  }));
+type CardProduct = {
+  id: number;
+  name: string;
+  category: string;
+  price: number;
+  image: string;
+  href: string;
+  isNew: boolean;
+  colors: string[];
+};
 
 const categories = ["Tous", "Polos", "T-shirts", "Chemises", "Sweats", "Pulls", "Pantalons", "Vestes"];
 const sortOptions = ["Nouveautés", "Prix croissant", "Prix décroissant"];
 
-// COMPOSANT PANNEAU DE FILTRES (réutilisable)
 function FilterPanel({
   selectedCategory,
   setSelectedCategory,
@@ -65,7 +60,6 @@ function FilterPanel({
 }: any) {
   return (
     <div className="space-y-5">
-      {/* Catégories */}
       <div>
         <h3 className="text-[10px] tracking-[0.3em] uppercase text-[#1A2332] font-semibold mb-3">
           Catégorie
@@ -89,7 +83,6 @@ function FilterPanel({
         </ul>
       </div>
 
-      {/* Prix */}
       <div className="pt-4 border-t border-[#1A2332]/10">
         <h3 className="text-[10px] tracking-[0.3em] uppercase text-[#1A2332] font-semibold mb-3">
           Prix
@@ -133,7 +126,6 @@ function FilterPanel({
             <button
               onClick={handleResetPrice}
               className="px-3 py-1.5 text-[10px] tracking-[0.2em] uppercase text-[#1A2332]/60 hover:text-[#1A2332] transition-colors border border-[#1A2332]/20 hover:border-[#1A2332]"
-              aria-label="Réinitialiser le prix"
             >
               Réinitialiser
             </button>
@@ -147,7 +139,6 @@ function FilterPanel({
         )}
       </div>
 
-      {/* Tri */}
       <div className="pt-4 border-t border-[#1A2332]/10">
         <h3 className="text-[10px] tracking-[0.3em] uppercase text-[#1A2332] font-semibold mb-3">
           Trier par
@@ -171,7 +162,6 @@ function FilterPanel({
         </ul>
       </div>
 
-      {/* Bouton Appliquer (desktop) */}
       <div className="hidden lg:block pt-4 border-t border-[#1A2332]/10">
         <button
           onClick={handleApplyWithEffect}
@@ -184,27 +174,11 @@ function FilterPanel({
   );
 }
 
-// CONTENU (utilise useSearchParams, doit être dans un Suspense)
 function HommeContent() {
   const searchParams = useSearchParams();
+  const [allItems, setAllItems] = useState<CardProduct[]>([]);
+  const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState("Tous");
-
-  // Lire le paramètre ?cat= de l'URL et matcher avec la liste (insensible casse/accents)
-  useEffect(() => {
-    const catParam = searchParams.get("cat");
-    if (!catParam) {
-      setSelectedCategory("Tous");
-      return;
-    }
-    const normalize = (s: string) =>
-      s
-        .toLowerCase()
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "")
-        .replace(/[-\s]/g, "");
-    const match = categories.find((c) => normalize(c) === normalize(catParam));
-    setSelectedCategory(match || "Tous");
-  }, [searchParams]);
   const [sortBy, setSortBy] = useState("Nouveautés");
   const [minPriceInput, setMinPriceInput] = useState("");
   const [maxPriceInput, setMaxPriceInput] = useState("");
@@ -212,6 +186,36 @@ function HommeContent() {
   const [appliedMaxPrice, setAppliedMaxPrice] = useState(9999);
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
   const [isFiltering, setIsFiltering] = useState(false);
+
+  // Charger les produits depuis Supabase
+  useEffect(() => {
+    getAllProducts("homme").then((products: Product[]) => {
+      const cards = products.map((p) => ({
+        id: p.id,
+        name: p.name,
+        category: p.category,
+        price: p.price,
+        image: p.imagesByColor[p.colors[0]]?.[0] || "",
+        href: `/homme/${p.slug}`,
+        isNew: p.isNew,
+        colors: p.colors,
+      }));
+      setAllItems(cards);
+      setLoading(false);
+    });
+  }, []);
+
+  useEffect(() => {
+    const catParam = searchParams.get("cat");
+    if (!catParam) {
+      setSelectedCategory("Tous");
+      return;
+    }
+    const normalize = (s: string) =>
+      s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[-\s]/g, "");
+    const match = categories.find((c) => normalize(c) === normalize(catParam));
+    setSelectedCategory(match || "Tous");
+  }, [searchParams]);
 
   useEffect(() => {
     if (isMobileFilterOpen) {
@@ -231,7 +235,6 @@ function HommeContent() {
     setAppliedMaxPrice(max);
   };
 
-  // Applique le filtre avec effet de fondu + scroll (style Ralph Lauren)
   const handleApplyWithEffect = () => {
     setIsFiltering(true);
     handleApplyPrice();
@@ -246,7 +249,7 @@ function HommeContent() {
     setAppliedMaxPrice(9999);
   };
 
-  let filteredProducts = products.filter((p) => {
+  let filteredProducts = allItems.filter((p) => {
     if (selectedCategory !== "Tous" && p.category !== selectedCategory) return false;
     if (p.price < appliedMinPrice || p.price > appliedMaxPrice) return false;
     return true;
@@ -281,7 +284,6 @@ function HommeContent() {
       <Header />
       <AnnouncementBar />
 
-      {/* HERO */}
       <section className="relative bg-[#0A0A0A] text-white overflow-hidden">
         <div
           className="absolute inset-0 bg-cover bg-center opacity-50"
@@ -311,23 +313,20 @@ function HommeContent() {
         </div>
       </section>
 
-      {/* CONTENU PRINCIPAL */}
       <section className="bg-[#F5F1EA] py-8 md:py-16 px-3 sm:px-6">
         <div className="max-w-7xl mx-auto">
           <div className="grid grid-cols-1 lg:grid-cols-[240px_1fr] gap-8 lg:gap-12">
 
-            {/* SIDEBAR DESKTOP */}
             <aside className="hidden lg:block">
               <FadeIn direction="up">
                 <FilterPanel {...filterProps} />
               </FadeIn>
             </aside>
 
-            {/* GRILLE PRODUITS */}
             <div>
               <div className="flex justify-between items-center mb-4 md:mb-8">
                 <p className="text-[10px] sm:text-xs tracking-[0.2em] uppercase text-[#1A2332]/60">
-                  {filteredProducts.length} pièce{filteredProducts.length > 1 ? "s" : ""}
+                  {loading ? "Chargement..." : `${filteredProducts.length} pièce${filteredProducts.length > 1 ? "s" : ""}`}
                 </p>
 
                 <button
@@ -343,7 +342,11 @@ function HommeContent() {
                 </button>
               </div>
 
-              {filteredProducts.length === 0 ? (
+              {loading ? (
+                <div className="text-center py-20 text-[#1A2332]/40 text-sm">
+                  Chargement des produits...
+                </div>
+              ) : filteredProducts.length === 0 ? (
                 <div className="text-center py-20 text-[#1A2332]/40 text-sm">
                   Aucune pièce ne correspond à votre sélection.
                 </div>
@@ -353,11 +356,7 @@ function HommeContent() {
                   style={{ opacity: isFiltering ? 0 : 1 }}
                 >
                   {filteredProducts.map((product) => (
-                    <Link
-                      key={product.id}
-                      href={product.href}
-                      className="group block"
-                    >
+                    <Link key={product.id} href={product.href} className="group block">
                       <div className="relative aspect-[3/4] w-full overflow-hidden bg-[#EFE9DC] mb-2 sm:mb-3">
                         <div
                           className="absolute inset-0 bg-cover bg-center transition-transform duration-700 ease-out group-hover:scale-105"
@@ -389,7 +388,6 @@ function HommeContent() {
                           {product.price} €
                         </p>
 
-                        {/* Ronds de couleurs */}
                         <div className="flex items-center gap-1.5 mt-1.5">
                           {product.colors.map((color) => (
                             <span
@@ -417,7 +415,6 @@ function HommeContent() {
         </div>
       </section>
 
-      {/* DRAWER MOBILE DES FILTRES */}
       <div
         className={`fixed inset-0 z-50 lg:hidden transition-all duration-500 ease-in-out ${
           isMobileFilterOpen ? "visible" : "invisible"
@@ -475,7 +472,6 @@ function HommeContent() {
   );
 }
 
-// COMPOSANT PRINCIPAL (enveloppe dans Suspense pour useSearchParams)
 export default function HommePage() {
   return (
     <Suspense fallback={null}>
