@@ -3,7 +3,6 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import CountdownTimer from "@/components/CountdownTimer";
 import FadeIn from "@/components/FadeIn";
-import FragmentIndice from "@/components/FragmentIndice";
 
 export const metadata = {
   title: "Drops — Northstone",
@@ -122,9 +121,6 @@ export default function DropsPage() {
                   >
                     Comment ça marche ?
                   </Link>
-                  <div className="mt-3 flex">
-                    <FragmentIndice fragment="POL" ordre={1} />
-                  </div>
                 </div>
               </div>
             </FadeIn>
@@ -301,7 +297,7 @@ export default function DropsPage() {
                       03
                     </div>
                     <div className="text-[8px] sm:text-[10px] tracking-[0.2em] uppercase text-white/60">
-                      Empreinte
+                      Puce
                     </div>
                   </div>
                 </div>

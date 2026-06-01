@@ -13,7 +13,7 @@ const columns = [
   {
     title: "Maison",
     links: [
-      { label: "Notre histoire", href: "/about" },
+      { label: "Notre histoire", href: "/a-propos" },
       { label: "Savoir-faire", href: "/savoir-faire" },
       { label: "Authenticité", href: "/authenticite" },
       { label: "Boutiques", href: "/boutiques" },

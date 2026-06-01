@@ -22,14 +22,14 @@ const pillars = [
     title: "La carte",
     subtitle: "Tangible",
     description:
-      "Certificat physique avec QR code à usage unique. Active votre pièce sur votre compte.",
+      "Certificat physique avec QR code à usage unique. Son scan lie votre pièce à votre compte, puis se désactive à vie.",
   },
   {
     number: "03",
-    title: "L'empreinte",
+    title: "La puce",
     subtitle: "Invisible",
     description:
-      "Une signature cryptographique scellée dans le tissu. Mathématiquement infalsifiable.",
+      "Une puce NFC NTAG 424 DNA scellée dans l'étiquette tissée. Résistante au lavage, à signature dynamique non clonable.",
   },
 ];
 
@@ -50,13 +50,13 @@ const journey = [
     step: "03",
     title: "Vérification",
     description:
-      "À tout moment, approchez votre téléphone de la pièce. Authenticité confirmée en temps réel.",
+      "Approchez votre téléphone de l'étiquette. La puce NFC confirme l'authenticité en temps réel, sans aucune application.",
   },
   {
     step: "04",
     title: "Transmission",
     description:
-      "Pour revendre, un transfert sécurisé garantit que la propriété passe à l'acheteur. Sans intermédiaire.",
+      "Pour revendre, l'acheteur scanne la puce. Le serveur valide la signature, la propriété bascule sur son compte et quitte le vôtre. Sans intermédiaire.",
   },
 ];
 
@@ -64,17 +64,17 @@ const guarantees = [
   {
     title: "Clonage impossible",
     description:
-      "Notre système génère une signature différente à chaque vérification. Ce qui fonctionne aujourd'hui ne fonctionnera plus demain pour un imitateur.",
+      "La puce NTAG 424 DNA génère une signature cryptographique dynamique à chaque scan. Un contrefacteur ne peut pas la reproduire.",
   },
   {
-    title: "Corrélation triple",
+    title: "Verrouillage par corrélation",
     description:
-      "Trois éléments doivent correspondre simultanément. Même en possédant l'un, les deux autres restent inaccessibles.",
+      "Trois facteurs doivent correspondre : la puce NFC, le numéro de série brodé, et une clé secrète stockée sur nos serveurs — jamais imprimée.",
   },
   {
-    title: "Registre souverain",
+    title: "Traçabilité totale",
     description:
-      "Northstone est l'unique gardien du registre. Aucune information sensible n'est jamais imprimée, partagée ou exposée.",
+      "Notre registre de propriété est mis à jour en temps réel. Le détenteur légitime est connu à tout instant, et les accès révocables en cas de vol.",
   },
 ];
 
@@ -89,7 +89,7 @@ const faqs = [
   },
   {
     q: "Et si quelqu'un copie ma pièce ?",
-    a: "Un imitateur peut copier le tissu et la broderie. Il ne peut pas copier l'empreinte. Toute tentative de vérification dévoile l'imitation en quelques secondes.",
+    a: "Un imitateur peut copier le tissu et la broderie. Il ne peut pas reproduire la puce NFC ni la clé secrète liée à votre numéro de série. Toute vérification dévoile l'imitation en quelques secondes.",
   },
   {
     q: "Mon iPhone est-il compatible ?",
@@ -385,7 +385,7 @@ export default function AuthenticitePage() {
             <h2 className="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-[0.95] mb-8">
               UNE PIÈCE.
               <br />
-              <span className="text-white/40">UNE EMPREINTE.</span>
+              <span className="text-white/40">UNE PUCE.</span>
               <br />
               UN HÉRITAGE.
             </h2>
