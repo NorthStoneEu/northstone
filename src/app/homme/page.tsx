@@ -26,7 +26,11 @@ const colorMap: Record<string, string> = {
 };
 
 function getColorValue(colorName: string): string {
-  return colorMap[colorName] || "#9CA3AF";
+  // Recherche insensible à la casse : "noir", "Noir", "NOIR" → tous trouvés
+  const key = Object.keys(colorMap).find(
+    (k) => k.toLowerCase() === colorName.toLowerCase()
+  );
+  return key ? colorMap[key] : "#9CA3AF";
 }
 
 type CardProduct = {

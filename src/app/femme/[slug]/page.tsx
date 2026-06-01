@@ -7,7 +7,7 @@ import Header from "@/components/Header";
 import AnnouncementBar from "@/components/AnnouncementBar";
 import Footer from "@/components/Footer";
 import FadeIn from "@/components/FadeIn";
-import { getProductBySlug, getSimilarProducts } from "@/data/products";
+import { getProductBySlug, getSimilarProducts, type Product } from "@/data/catalog";
 import { useCart } from "@/context/CartContext";
 
 const colorMap: Record<string, string> = {
@@ -24,26 +24,64 @@ const colorMap: Record<string, string> = {
   "Kaki": "#5C5D3D",
   "Vert forêt": "#1F3D2E",
   "Cognac": "#8B5A3C",
+  "Rose poudré": "#E8C5C5",
 };
 
 function getColorValue(colorName: string): string {
-  return colorMap[colorName] || "#9CA3AF";
+  const key = Object.keys(colorMap).find(
+    (k) => k.toLowerCase() === colorName.toLowerCase()
+  );
+  return key ? colorMap[key] : "#9CA3AF";
 }
 
 export default function ProductPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = use(params);
-  const product = getProductBySlug(slug, "femme");
+  const [product, setProduct] = useState<Product | null>(null);
+  const [similar, setSimilar] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [notFoundFlag, setNotFoundFlag] = useState(false);
 
-  if (!product) {
+  useEffect(() => {
+    let active = true;
+    getProductBySlug(slug, "femme").then(async (p) => {
+      if (!active) return;
+      if (!p) {
+        setNotFoundFlag(true);
+        setLoading(false);
+        return;
+      }
+      setProduct(p);
+      const sim = await getSimilarProducts(p.id, p.category, "femme", 4);
+      if (!active) return;
+      setSimilar(sim);
+      setLoading(false);
+    });
+    return () => {
+      active = false;
+    };
+  }, [slug]);
+
+  if (notFoundFlag) {
     notFound();
   }
 
-  const similar = getSimilarProducts(product.id, product.category, "femme", 4);
+  if (loading || !product) {
+    return (
+      <>
+        <Header />
+        <AnnouncementBar />
+        <div className="bg-[#F5F1EA] min-h-[60vh] flex items-center justify-center text-[#1A2332]/40 text-sm">
+          Chargement...
+        </div>
+        <Footer />
+      </>
+    );
+  }
 
   return <ProductDetail product={product} similar={similar} />;
 }
 
-function ProductDetail({ product, similar }: { product: any; similar: any[] }) {
+function ProductDetail({ product, similar }: { product: Product; similar: Product[] }) {
   const { addItem, openCart } = useCart();
   const [selectedColor, setSelectedColor] = useState(product.colors[0]);
   const [selectedImage, setSelectedImage] = useState(0);
@@ -53,7 +91,7 @@ function ProductDetail({ product, similar }: { product: any; similar: any[] }) {
   const [isZooming, setIsZooming] = useState(false);
   const [zoomPosition, setZoomPosition] = useState({ x: 50, y: 50 });
 
-  const currentImages = product.imagesByColor[selectedColor] || product.imagesByColor[product.colors[0]];
+  const currentImages = product.imagesByColor[selectedColor] || product.imagesByColor[product.colors[0]] || [];
 
   useEffect(() => {
     setSelectedImage(0);
@@ -73,7 +111,7 @@ function ProductDetail({ product, similar }: { product: any; similar: any[] }) {
       price: product.price,
       color: selectedColor,
       size: selectedSize,
-      image: currentImages[0],
+      image: currentImages[0] || "",
     });
     openCart();
   };
@@ -90,7 +128,6 @@ function ProductDetail({ product, similar }: { product: any; similar: any[] }) {
       <Header />
       <AnnouncementBar />
 
-      {/* FIL D'ARIANE */}
       <div className="bg-[#F5F1EA] px-4 sm:px-6 pt-6 pb-2">
         <div className="max-w-7xl mx-auto">
           <nav className="flex items-center gap-2 text-[10px] tracking-[0.15em] uppercase text-[#1A2332]/60">
@@ -103,15 +140,12 @@ function ProductDetail({ product, similar }: { product: any; similar: any[] }) {
         </div>
       </div>
 
-      {/* PRODUIT PRINCIPAL */}
       <section className="bg-[#F5F1EA] px-4 sm:px-6 py-6 md:py-10">
         <div className="max-w-7xl mx-auto">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16">
 
-            {/* COLONNE GAUCHE : GALERIE */}
             <div>
               <div className="flex gap-3 md:gap-4">
-                {/* Miniatures verticales (desktop) */}
                 <div className="hidden md:flex flex-col gap-3 w-20">
                   {currentImages.map((img: string, i: number) => (
                     <button
@@ -130,7 +164,6 @@ function ProductDetail({ product, similar }: { product: any; similar: any[] }) {
                   ))}
                 </div>
 
-                {/* Image principale avec zoom */}
                 <div className="flex-1">
                   <div
                     className="relative aspect-[3/4] w-full max-h-[55vh] md:max-h-none mx-auto overflow-hidden bg-[#EFE9DC] group"
@@ -142,7 +175,7 @@ function ProductDetail({ product, similar }: { product: any; similar: any[] }) {
                       key={`${selectedColor}-${selectedImage}`}
                       className="absolute inset-0 bg-cover bg-center transition-all duration-500"
                       style={{
-                        backgroundImage: `url('${currentImages[selectedImage]}')`,
+                        backgroundImage: `url('${currentImages[selectedImage] || ""}')`,
                         transform: isZooming ? "scale(1.5)" : "scale(1)",
                         transformOrigin: `${zoomPosition.x}% ${zoomPosition.y}%`,
                       }}
@@ -182,7 +215,6 @@ function ProductDetail({ product, similar }: { product: any; similar: any[] }) {
                 </div>
               </div>
 
-              {/* Miniatures mobiles */}
               <div className="md:hidden grid grid-cols-4 gap-2 mt-3">
                 {currentImages.map((img: string, i: number) => (
                   <button
@@ -202,7 +234,6 @@ function ProductDetail({ product, similar }: { product: any; similar: any[] }) {
               </div>
             </div>
 
-            {/* COLONNE DROITE : INFOS */}
             <div>
               <FadeIn direction="up">
                 <p className="text-[10px] tracking-[0.3em] uppercase text-[#B8985A] mb-2">
@@ -220,7 +251,6 @@ function ProductDetail({ product, similar }: { product: any; similar: any[] }) {
                   {product.description}
                 </p>
 
-                {/* Sélection couleur */}
                 <div className="mb-6">
                   <div className="flex items-center justify-between mb-3">
                     <p className="text-[10px] tracking-[0.2em] uppercase text-[#1A2332] font-semibold">
@@ -246,7 +276,6 @@ function ProductDetail({ product, similar }: { product: any; similar: any[] }) {
                   </div>
                 </div>
 
-                {/* Sélection taille */}
                 <div className="mb-6">
                   <div className="flex items-center justify-between mb-3">
                     <p className="text-[10px] tracking-[0.2em] uppercase text-[#1A2332] font-semibold">
@@ -273,7 +302,6 @@ function ProductDetail({ product, similar }: { product: any; similar: any[] }) {
                   </div>
                 </div>
 
-                {/* Bouton AJOUTER AU PANIER */}
                 <button
                   onClick={handleAddToCart}
                   disabled={!selectedSize}
@@ -286,7 +314,6 @@ function ProductDetail({ product, similar }: { product: any; similar: any[] }) {
                   {selectedSize ? "Ajouter au panier" : "Sélectionnez une taille"}
                 </button>
 
-                {/* ACCORDÉONS */}
                 <div className="border-t border-[#1A2332]/10">
                   {[
                     { id: "composition", title: "Composition & Origine", content: product.composition },
@@ -333,7 +360,6 @@ function ProductDetail({ product, similar }: { product: any; similar: any[] }) {
         </div>
       </section>
 
-      {/* SECTION "VOUS AIMEREZ AUSSI" */}
       {similar.length > 0 && (
         <section className="bg-[#EFE9DC] py-10 md:py-14 px-4 sm:px-6">
           <div className="max-w-7xl mx-auto">
@@ -355,7 +381,7 @@ function ProductDetail({ product, similar }: { product: any; similar: any[] }) {
                   <div className="relative aspect-[3/4] w-full overflow-hidden bg-[#F5F1EA] mb-2 sm:mb-3">
                     <div
                       className="absolute inset-0 bg-cover bg-center transition-transform duration-700 ease-out group-hover:scale-105"
-                      style={{ backgroundImage: `url('${p.imagesByColor[p.colors[0]][0]}')` }}
+                      style={{ backgroundImage: `url('${p.imagesByColor[p.colors[0]]?.[0] || ""}')` }}
                       aria-hidden="true"
                     />
                     {p.isNew && (

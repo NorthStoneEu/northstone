@@ -40,7 +40,7 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
 
   useEffect(() => {
     let active = true;
-    getProductBySlug(slug, "femme").then(async (p) => {
+    getProductBySlug(slug, "homme").then(async (p) => {
       if (!active) return;
       if (!p) {
         setNotFoundFlag(true);
@@ -48,7 +48,7 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
         return;
       }
       setProduct(p);
-      const sim = await getSimilarProducts(p.id, p.category, "femme", 4);
+      const sim = await getSimilarProducts(p.id, p.category, "homme", 4);
       if (!active) return;
       setSimilar(sim);
       setLoading(false);

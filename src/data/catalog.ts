@@ -48,6 +48,7 @@ export async function getAllProducts(gender?: "homme" | "femme"): Promise<Produc
   return (data || []).map(rowToProduct);
 }
 
+
 export async function getProductBySlug(
   slug: string,
   gender?: "homme" | "femme"
