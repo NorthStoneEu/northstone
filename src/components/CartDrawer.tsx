@@ -146,12 +146,16 @@ export default function CartDrawer() {
                     onClick={closeCart}
                     className="block w-20 h-24 bg-[#EFE9DC] flex-shrink-0 overflow-hidden"
                   >
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={item.image}
-                      alt={item.name}
-                      style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                    />
+                    {item.image ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={item.image}
+                        alt={item.name}
+                        style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                      />
+                    ) : (
+                      <div style={{ width: "100%", height: "100%", background: "#EFE9DC" }} />
+                    )}
                   </Link>
 
                   {/* Infos */}

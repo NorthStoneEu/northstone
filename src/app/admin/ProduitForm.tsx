@@ -19,6 +19,7 @@ type FormProduct = {
   colors: string[];
   sizes: string[];
   imagesByColor: Record<string, string[]>;
+  stockBySize: Record<string, number>;
 };
 
 const empty: FormProduct = {
@@ -35,6 +36,7 @@ const empty: FormProduct = {
   colors: [],
   sizes: [],
   imagesByColor: {},
+  stockBySize: {},
 };
 
 const categoriesHomme = ["Polos", "T-shirts", "Chemises", "Sweats", "Pulls", "Pantalons", "Vestes"];
@@ -55,7 +57,6 @@ export default function ProduitForm({ initial }: { initial?: FormProduct }) {
     setP((prev) => ({ ...prev, [field]: value }));
   };
 
-  // Génère un slug automatique depuis le nom
   const genererSlug = () => {
     const slug = p.name
       .toLowerCase()
@@ -92,15 +93,34 @@ export default function ProduitForm({ initial }: { initial?: FormProduct }) {
   const ajouterTaille = () => {
     const s = newSize.trim();
     if (!s || p.sizes.includes(s)) return;
-    set("sizes", [...p.sizes, s]);
+    setP((prev) => ({
+      ...prev,
+      sizes: [...prev.sizes, s],
+      stockBySize: { ...prev.stockBySize, [s]: prev.stockBySize[s] || 0 },
+    }));
     setNewSize("");
   };
 
   const retirerTaille = (s: string) => {
-    set("sizes", p.sizes.filter((x) => x !== s));
+    setP((prev) => {
+      const newStock = { ...prev.stockBySize };
+      delete newStock[s];
+      return {
+        ...prev,
+        sizes: prev.sizes.filter((x) => x !== s),
+        stockBySize: newStock,
+      };
+    });
   };
 
-  // Upload d'une image directement vers Supabase Storage (évite la limite 1MB de Next.js)
+  // Modifier la quantité en stock d'une taille
+  const setStock = (size: string, qty: number) => {
+    setP((prev) => ({
+      ...prev,
+      stockBySize: { ...prev.stockBySize, [size]: qty < 0 ? 0 : qty },
+    }));
+  };
+
   const uploaderImage = async (color: string, file: File) => {
     setUploadingColor(color);
     try {
@@ -155,6 +175,7 @@ export default function ProduitForm({ initial }: { initial?: FormProduct }) {
     const res = await fetch("/api/admin/produits", {
       method,
       headers: { "Content-Type": "application/json" },
+      credentials: "include",
       body: JSON.stringify(p),
     });
     setSaving(false);
@@ -169,6 +190,9 @@ export default function ProduitForm({ initial }: { initial?: FormProduct }) {
   const inputClass =
     "w-full bg-transparent border border-[#1A2332]/20 px-3 py-2 text-sm text-[#1A2332] focus:outline-none focus:border-[#B8985A] transition-colors";
   const labelClass = "block text-[10px] tracking-[0.25em] uppercase text-[#1A2332]/50 mb-2";
+
+  // Stock total (somme de toutes les tailles)
+  const stockTotal = p.sizes.reduce((sum, s) => sum + (p.stockBySize[s] || 0), 0);
 
   return (
     <div className="min-h-screen bg-[#F5F1EA]">
@@ -274,20 +298,51 @@ export default function ProduitForm({ initial }: { initial?: FormProduct }) {
             <textarea className={inputClass} rows={2} value={p.delivery} onChange={(e) => set("delivery", e.target.value)} />
           </div>
 
-          {/* Tailles */}
+          {/* Tailles + STOCK */}
           <div>
-            <label className={labelClass}>Tailles</label>
-            <div className="flex flex-wrap gap-2 mb-2">
-              {p.sizes.map((s) => (
-                <span key={s} className="inline-flex items-center gap-1 bg-[#EFE9DC] px-3 py-1 text-xs text-[#1A2332]">
-                  {s}
-                  <button onClick={() => retirerTaille(s)} className="text-red-500 font-bold ml-1" style={{ cursor: "pointer" }}>×</button>
-                </span>
-              ))}
-            </div>
+            <label className={labelClass}>Tailles & Stock</label>
+            <p className="text-xs text-[#1A2332]/50 mb-3">
+              Indique la quantité disponible pour chaque taille. Une taille à 0 sera affichée comme épuisée.
+            </p>
+
+            {p.sizes.length > 0 && (
+              <div className="space-y-2 mb-3">
+                {p.sizes.map((s) => (
+                  <div key={s} className="flex items-center gap-3 bg-[#EFE9DC] px-3 py-2">
+                    <span className="text-sm font-semibold text-[#1A2332] w-16">{s}</span>
+                    <div className="flex items-center gap-2 flex-1">
+                      <label className="text-[10px] tracking-[0.15em] uppercase text-[#1A2332]/50">
+                        Stock :
+                      </label>
+                      <input
+                        type="number"
+                        min={0}
+                        value={p.stockBySize[s] ?? 0}
+                        onChange={(e) => setStock(s, Number(e.target.value))}
+                        className="w-20 bg-white border border-[#1A2332]/20 px-2 py-1 text-sm text-[#1A2332] focus:outline-none focus:border-[#B8985A]"
+                      />
+                      <span className="text-xs text-[#1A2332]/40">
+                        {(p.stockBySize[s] || 0) === 0 ? "(épuisé)" : `${p.stockBySize[s]} dispo`}
+                      </span>
+                    </div>
+                    <button
+                      onClick={() => retirerTaille(s)}
+                      className="text-red-500 font-bold text-lg"
+                      style={{ cursor: "pointer" }}
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))}
+                <p className="text-[11px] text-[#B8985A] font-semibold pt-1">
+                  Stock total : {stockTotal} article(s)
+                </p>
+              </div>
+            )}
+
             <div className="flex gap-2">
               <input className={inputClass} placeholder="ex: M, 32, TU..." value={newSize} onChange={(e) => setNewSize(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); ajouterTaille(); } }} />
-              <button onClick={ajouterTaille} className="px-4 py-2 text-[10px] tracking-[0.15em] uppercase bg-[#1A2332] text-white whitespace-nowrap" style={{ cursor: "pointer" }}>Ajouter</button>
+              <button onClick={ajouterTaille} className="px-4 py-2 text-[10px] tracking-[0.15em] uppercase bg-[#1A2332] text-white whitespace-nowrap" style={{ cursor: "pointer" }}>Ajouter taille</button>
             </div>
           </div>
 
@@ -307,7 +362,6 @@ export default function ProduitForm({ initial }: { initial?: FormProduct }) {
                     <button onClick={() => retirerCouleur(color)} className="text-[10px] tracking-[0.15em] uppercase text-red-600" style={{ cursor: "pointer" }}>Retirer cette couleur</button>
                   </div>
 
-                  {/* Images de cette couleur */}
                   <div className="flex flex-wrap gap-2 mb-3">
                     {(p.imagesByColor[color] || []).map((url) => (
                       <div key={url} className="relative w-16 h-20 bg-[#EFE9DC] bg-cover bg-center" style={{ backgroundImage: `url('${url}')` }}>

@@ -15,6 +15,7 @@ export type Product = {
   isNew: boolean;
   colors: string[];
   sizes: string[];
+  stockBySize: Record<string, number>;
 };
 
 function rowToProduct(row: any): Product {
@@ -33,6 +34,7 @@ function rowToProduct(row: any): Product {
     isNew: row.is_new,
     colors: row.colors || [],
     sizes: row.sizes || [],
+    stockBySize: row.stock_by_size || {},
   };
 }
 

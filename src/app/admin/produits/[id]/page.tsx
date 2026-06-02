@@ -48,6 +48,7 @@ export default async function ModifierProduitPage({
     colors: data.colors || [],
     sizes: data.sizes || [],
     imagesByColor: data.images_by_color || {},
+    stockBySize: data.stock_by_size || {},
   };
 
   return <ProduitForm initial={initial} />;

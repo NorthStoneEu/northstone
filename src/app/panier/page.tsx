@@ -92,12 +92,16 @@ export default function PanierPage() {
                         href={`/${item.gender}/${item.slug}`}
                         className="block w-24 h-32 sm:w-28 sm:h-36 bg-[#EFE9DC] flex-shrink-0 overflow-hidden"
                       >
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                          src={item.image}
-                          alt={item.name}
-                          style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                        />
+                        {item.image ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={item.image}
+                            alt={item.name}
+                            style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                          />
+                        ) : (
+                          <div style={{ width: "100%", height: "100%", background: "#EFE9DC" }} />
+                        )}
                       </Link>
 
                       {/* Infos */}

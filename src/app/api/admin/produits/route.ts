@@ -51,6 +51,7 @@ export async function POST(req: NextRequest) {
       colors: body.colors || [],
       sizes: body.sizes || [],
       images_by_color: body.imagesByColor || {},
+      stock_by_size: body.stockBySize || {},
     })
     .select()
     .single();
@@ -88,6 +89,7 @@ export async function PUT(req: NextRequest) {
       colors: body.colors || [],
       sizes: body.sizes || [],
       images_by_color: body.imagesByColor || {},
+      stock_by_size: body.stockBySize || {},
       updated_at: new Date().toISOString(),
     })
     .eq("id", body.id)

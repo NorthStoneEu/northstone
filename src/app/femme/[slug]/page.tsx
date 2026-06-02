@@ -82,10 +82,11 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
 }
 
 function ProductDetail({ product, similar }: { product: Product; similar: Product[] }) {
-  const { addItem, openCart } = useCart();
+  const { addItem, openCart, items } = useCart();
   const [selectedColor, setSelectedColor] = useState(product.colors[0]);
   const [selectedImage, setSelectedImage] = useState(0);
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
+  const [quantite, setQuantite] = useState(1);
   const [openAccordion, setOpenAccordion] = useState<string | null>(null);
   const [isFavorite, setIsFavorite] = useState(false);
   const [isZooming, setIsZooming] = useState(false);
@@ -93,9 +94,34 @@ function ProductDetail({ product, similar }: { product: Product; similar: Produc
 
   const currentImages = product.imagesByColor[selectedColor] || product.imagesByColor[product.colors[0]] || [];
 
+  const stockBySize = product.stockBySize || {};
+  const getStock = (size: string) => stockBySize[size] ?? 0;
+
+  const dejaDansPanier = (size: string) =>
+    items
+      .filter((it) => it.productId === product.id && it.color === selectedColor && it.size === size)
+      .reduce((sum, it) => sum + it.quantity, 0);
+
+  const stockRestant = selectedSize
+    ? getStock(selectedSize) - dejaDansPanier(selectedSize)
+    : 0;
+
+  const toutEpuise = product.sizes.every((s) => getStock(s) <= 0);
+
   useEffect(() => {
     setSelectedImage(0);
   }, [selectedColor]);
+
+  useEffect(() => {
+    if (selectedSize && getStock(selectedSize) <= 0) {
+      setSelectedSize(null);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedColor]);
+
+  useEffect(() => {
+    setQuantite(1);
+  }, [selectedSize]);
 
   const toggleAccordion = (id: string) => {
     setOpenAccordion(openAccordion === id ? null : id);
@@ -103,16 +129,21 @@ function ProductDetail({ product, similar }: { product: Product; similar: Produc
 
   const handleAddToCart = () => {
     if (!selectedSize) return;
-    addItem({
-      productId: product.id,
-      slug: product.slug,
-      gender: "femme",
-      name: product.name,
-      price: product.price,
-      color: selectedColor,
-      size: selectedSize,
-      image: currentImages[0] || "",
-    });
+    if (stockRestant <= 0) return;
+    const qteAjout = Math.min(quantite, stockRestant);
+    addItem(
+      {
+        productId: product.id,
+        slug: product.slug,
+        gender: "femme",
+        name: product.name,
+        price: product.price,
+        color: selectedColor,
+        size: selectedSize,
+        image: currentImages[0] || "",
+      },
+      qteAjout
+    );
     openCart();
   };
 
@@ -122,6 +153,19 @@ function ProductDetail({ product, similar }: { product: Product; similar: Produc
     const y = ((e.clientY - rect.top) / rect.height) * 100;
     setZoomPosition({ x, y });
   };
+
+  let boutonTexte = "Ajouter au panier";
+  let boutonActif = true;
+  if (toutEpuise) {
+    boutonTexte = "Produit épuisé";
+    boutonActif = false;
+  } else if (!selectedSize) {
+    boutonTexte = "Sélectionnez une taille";
+    boutonActif = false;
+  } else if (stockRestant <= 0) {
+    boutonTexte = "Stock maximum atteint";
+    boutonActif = false;
+  }
 
   return (
     <>
@@ -185,6 +229,14 @@ function ProductDetail({ product, similar }: { product: Product; similar: Produc
                     {product.isNew && (
                       <div className="absolute top-3 left-3 sm:top-4 sm:left-4 bg-[#1A2332] text-[#F5F1EA] px-2 py-1 sm:px-3 sm:py-1.5 text-[8px] sm:text-[10px] tracking-[0.2em] uppercase font-semibold z-10">
                         Nouveau
+                      </div>
+                    )}
+
+                    {toutEpuise && (
+                      <div className="absolute inset-0 bg-black/40 flex items-center justify-center z-10">
+                        <span className="bg-[#1A2332] text-white px-4 py-2 text-xs tracking-[0.2em] uppercase font-semibold">
+                          Épuisé
+                        </span>
                       </div>
                     )}
 
@@ -286,32 +338,98 @@ function ProductDetail({ product, similar }: { product: Product; similar: Produc
                     </button>
                   </div>
                   <div className="grid grid-cols-5 gap-2">
-                    {product.sizes.map((size: string) => (
-                      <button
-                        key={size}
-                        onClick={() => setSelectedSize(size)}
-                        className={`py-2.5 border text-xs font-semibold transition-colors ${
-                          selectedSize === size
-                            ? "bg-[#1A2332] text-[#F5F1EA] border-[#1A2332]"
-                            : "bg-transparent text-[#1A2332] border-[#1A2332]/30 hover:border-[#1A2332]"
-                        }`}
-                      >
-                        {size}
-                      </button>
-                    ))}
+                    {product.sizes.map((size: string) => {
+                      const stock = getStock(size);
+                      const epuise = stock <= 0;
+                      return (
+                        <button
+                          key={size}
+                          onClick={() => !epuise && setSelectedSize(size)}
+                          disabled={epuise}
+                          className={`relative py-2.5 border text-xs font-semibold transition-colors ${
+                            epuise
+                              ? "bg-[#1A2332]/5 text-[#1A2332]/30 border-[#1A2332]/10 cursor-not-allowed line-through"
+                              : selectedSize === size
+                              ? "bg-[#1A2332] text-[#F5F1EA] border-[#1A2332]"
+                              : "bg-transparent text-[#1A2332] border-[#1A2332]/30 hover:border-[#1A2332]"
+                          }`}
+                        >
+                          {size}
+                        </button>
+                      );
+                    })}
                   </div>
+
+                  {product.sizes.some((s) => getStock(s) <= 0) && !toutEpuise && (
+                    <p className="text-[10px] mt-3 text-[#1A2332]/40">
+                      Les tailles barrées sont en rupture de stock.
+                    </p>
+                  )}
+
+                  {selectedSize && !toutEpuise && (
+                    <p className="text-[11px] mt-2 text-[#1A2332]/60">
+                      {getStock(selectedSize) <= 5 ? (
+                        <span className="text-[#B8985A] font-semibold">
+                          Plus que {getStock(selectedSize)} en stock
+                        </span>
+                      ) : (
+                        <span>En stock</span>
+                      )}
+                    </p>
+                  )}
                 </div>
+
+                {selectedSize && stockRestant > 0 && (
+                  <div className="mb-6">
+                    <p className="text-[10px] tracking-[0.2em] uppercase text-[#1A2332] font-semibold mb-3">
+                      Quantité
+                    </p>
+                    <div className="flex items-center border border-[#1A2332]/20 w-fit">
+                      <button
+                        onClick={() => setQuantite((q) => Math.max(1, q - 1))}
+                        disabled={quantite <= 1}
+                        className="w-10 h-10 flex items-center justify-center text-[#1A2332] hover:text-[#B8985A] transition-colors disabled:opacity-30"
+                        style={{ background: "transparent", border: "none", cursor: quantite <= 1 ? "not-allowed" : "pointer" }}
+                        aria-label="Diminuer"
+                      >
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <line x1="5" y1="12" x2="19" y2="12" />
+                        </svg>
+                      </button>
+                      <span className="w-12 text-center text-sm font-semibold text-[#1A2332]">
+                        {quantite}
+                      </span>
+                      <button
+                        onClick={() => setQuantite((q) => Math.min(stockRestant, q + 1))}
+                        disabled={quantite >= stockRestant}
+                        className="w-10 h-10 flex items-center justify-center text-[#1A2332] hover:text-[#B8985A] transition-colors disabled:opacity-30"
+                        style={{ background: "transparent", border: "none", cursor: quantite >= stockRestant ? "not-allowed" : "pointer" }}
+                        aria-label="Augmenter"
+                      >
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <line x1="12" y1="5" x2="12" y2="19" />
+                          <line x1="5" y1="12" x2="19" y2="12" />
+                        </svg>
+                      </button>
+                    </div>
+                    {quantite >= stockRestant && (
+                      <p className="text-[10px] text-[#1A2332]/40 mt-2">
+                        Quantité maximale disponible atteinte.
+                      </p>
+                    )}
+                  </div>
+                )}
 
                 <button
                   onClick={handleAddToCart}
-                  disabled={!selectedSize}
+                  disabled={!boutonActif}
                   className={`w-full py-4 text-[11px] tracking-[0.3em] uppercase font-semibold transition-all mb-8 ${
-                    selectedSize
+                    boutonActif
                       ? "bg-black text-[#B8985A] border border-black hover:bg-[#1F1F1F]"
                       : "bg-[#1A2332]/20 text-[#1A2332]/40 border border-[#1A2332]/20 cursor-not-allowed"
                   }`}
                 >
-                  {selectedSize ? "Ajouter au panier" : "Sélectionnez une taille"}
+                  {boutonTexte}
                 </button>
 
                 <div className="border-t border-[#1A2332]/10">
