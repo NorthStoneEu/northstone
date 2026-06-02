@@ -42,6 +42,28 @@ const empty: FormProduct = {
 const categoriesHomme = ["Polos", "T-shirts", "Chemises", "Sweats", "Pulls", "Pantalons", "Vestes"];
 const categoriesFemme = ["Robes", "T-shirts", "Chemisiers", "Pulls", "Pantalons", "Vestes", "Accessoires"];
 
+// Ordre standard des tailles lettres
+const ordreTailles = ["XS", "S", "M", "L", "XL", "XXL", "XXXL"];
+
+// Trie une liste de tailles dans l'ordre logique (lettres puis chiffres puis le reste)
+function trierTailles(tailles: string[]): string[] {
+  return [...tailles].sort((a, b) => {
+    const ia = ordreTailles.indexOf(a.toUpperCase());
+    const ib = ordreTailles.indexOf(b.toUpperCase());
+    // Les deux sont des tailles lettres connues
+    if (ia !== -1 && ib !== -1) return ia - ib;
+    // Une seule est une taille lettre connue → elle passe avant
+    if (ia !== -1) return -1;
+    if (ib !== -1) return 1;
+    // Les deux sont des nombres → tri numérique
+    const na = Number(a);
+    const nb = Number(b);
+    if (!isNaN(na) && !isNaN(nb)) return na - nb;
+    // Sinon ordre alphabétique
+    return a.localeCompare(b);
+  });
+}
+
 export default function ProduitForm({ initial }: { initial?: FormProduct }) {
   const router = useRouter();
   const [p, setP] = useState<FormProduct>(initial || empty);
@@ -49,6 +71,7 @@ export default function ProduitForm({ initial }: { initial?: FormProduct }) {
   const [newColor, setNewColor] = useState("");
   const [newSize, setNewSize] = useState("");
   const [uploadingColor, setUploadingColor] = useState<string | null>(null);
+  const [dragIndex, setDragIndex] = useState<number | null>(null);
 
   const isEdit = !!p.id;
   const categories = p.gender === "homme" ? categoriesHomme : categoriesFemme;
@@ -90,12 +113,13 @@ export default function ProduitForm({ initial }: { initial?: FormProduct }) {
     });
   };
 
+  // Ajoute une taille puis re-trie automatiquement
   const ajouterTaille = () => {
     const s = newSize.trim();
     if (!s || p.sizes.includes(s)) return;
     setP((prev) => ({
       ...prev,
-      sizes: [...prev.sizes, s],
+      sizes: trierTailles([...prev.sizes, s]),
       stockBySize: { ...prev.stockBySize, [s]: prev.stockBySize[s] || 0 },
     }));
     setNewSize("");
@@ -113,12 +137,27 @@ export default function ProduitForm({ initial }: { initial?: FormProduct }) {
     });
   };
 
-  // Modifier la quantité en stock d'une taille
   const setStock = (size: string, qty: number) => {
     setP((prev) => ({
       ...prev,
       stockBySize: { ...prev.stockBySize, [size]: qty < 0 ? 0 : qty },
     }));
+  };
+
+  // Réordonne manuellement (glisser-déposer)
+  const deplacerTaille = (from: number, to: number) => {
+    if (from === to) return;
+    setP((prev) => {
+      const newSizes = [...prev.sizes];
+      const [moved] = newSizes.splice(from, 1);
+      newSizes.splice(to, 0, moved);
+      return { ...prev, sizes: newSizes };
+    });
+  };
+
+  // Remet l'ordre automatique
+  const retrierAuto = () => {
+    setP((prev) => ({ ...prev, sizes: trierTailles(prev.sizes) }));
   };
 
   const uploaderImage = async (color: string, file: File) => {
@@ -191,7 +230,6 @@ export default function ProduitForm({ initial }: { initial?: FormProduct }) {
     "w-full bg-transparent border border-[#1A2332]/20 px-3 py-2 text-sm text-[#1A2332] focus:outline-none focus:border-[#B8985A] transition-colors";
   const labelClass = "block text-[10px] tracking-[0.25em] uppercase text-[#1A2332]/50 mb-2";
 
-  // Stock total (somme de toutes les tailles)
   const stockTotal = p.sizes.reduce((sum, s) => sum + (p.stockBySize[s] || 0), 0);
 
   return (
@@ -298,17 +336,50 @@ export default function ProduitForm({ initial }: { initial?: FormProduct }) {
             <textarea className={inputClass} rows={2} value={p.delivery} onChange={(e) => set("delivery", e.target.value)} />
           </div>
 
-          {/* Tailles + STOCK */}
+          {/* Tailles + STOCK avec glisser-déposer */}
           <div>
-            <label className={labelClass}>Tailles & Stock</label>
+            <div className="flex items-center justify-between mb-2">
+              <label className={labelClass} style={{ marginBottom: 0 }}>Tailles & Stock</label>
+              {p.sizes.length > 1 && (
+                <button
+                  onClick={retrierAuto}
+                  className="text-[10px] tracking-[0.15em] uppercase text-[#B8985A] hover:underline"
+                  style={{ cursor: "pointer" }}
+                >
+                  Trier automatiquement
+                </button>
+              )}
+            </div>
             <p className="text-xs text-[#1A2332]/50 mb-3">
-              Indique la quantité disponible pour chaque taille. Une taille à 0 sera affichée comme épuisée.
+              Glisse une taille pour la réordonner. Une taille à 0 sera affichée comme épuisée.
             </p>
 
             {p.sizes.length > 0 && (
               <div className="space-y-2 mb-3">
-                {p.sizes.map((s) => (
-                  <div key={s} className="flex items-center gap-3 bg-[#EFE9DC] px-3 py-2">
+                {p.sizes.map((s, index) => (
+                  <div
+                    key={s}
+                    draggable
+                    onDragStart={() => setDragIndex(index)}
+                    onDragOver={(e) => e.preventDefault()}
+                    onDrop={() => {
+                      if (dragIndex !== null) deplacerTaille(dragIndex, index);
+                      setDragIndex(null);
+                    }}
+                    onDragEnd={() => setDragIndex(null)}
+                    className={`flex items-center gap-3 bg-[#EFE9DC] px-3 py-2 transition-opacity ${
+                      dragIndex === index ? "opacity-40" : "opacity-100"
+                    }`}
+                    style={{ cursor: "grab" }}
+                  >
+                    {/* Poignée de glissement */}
+                    <span className="text-[#1A2332]/30 select-none" title="Glisser pour réordonner">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                        <circle cx="9" cy="6" r="1.5" /><circle cx="15" cy="6" r="1.5" />
+                        <circle cx="9" cy="12" r="1.5" /><circle cx="15" cy="12" r="1.5" />
+                        <circle cx="9" cy="18" r="1.5" /><circle cx="15" cy="18" r="1.5" />
+                      </svg>
+                    </span>
                     <span className="text-sm font-semibold text-[#1A2332] w-16">{s}</span>
                     <div className="flex items-center gap-2 flex-1">
                       <label className="text-[10px] tracking-[0.15em] uppercase text-[#1A2332]/50">
@@ -319,6 +390,7 @@ export default function ProduitForm({ initial }: { initial?: FormProduct }) {
                         min={0}
                         value={p.stockBySize[s] ?? 0}
                         onChange={(e) => setStock(s, Number(e.target.value))}
+                        onDragStart={(e) => e.preventDefault()}
                         className="w-20 bg-white border border-[#1A2332]/20 px-2 py-1 text-sm text-[#1A2332] focus:outline-none focus:border-[#B8985A]"
                       />
                       <span className="text-xs text-[#1A2332]/40">

@@ -43,6 +43,7 @@ type CardProduct = {
   href: string;
   isNew: boolean;
   colors: string[];
+  epuise: boolean;
 };
 
 const categories = ["Tous", "Robes", "T-shirts", "Chemisiers", "Pulls", "Pantalons", "Vestes", "Accessoires"];
@@ -194,16 +195,23 @@ function FemmeContent() {
 
   useEffect(() => {
     getAllProducts("femme").then((products: Product[]) => {
-      const cards = products.map((p) => ({
-        id: p.id,
-        name: p.name,
-        category: p.category,
-        price: p.price,
-        image: p.imagesByColor[p.colors[0]]?.[0] || "",
-        href: `/femme/${p.slug}`,
-        isNew: p.isNew,
-        colors: p.colors,
-      }));
+      const cards = products.map((p) => {
+        const stockTotal = Object.values(p.stockBySize || {}).reduce(
+          (sum, q) => sum + (Number(q) || 0),
+          0
+        );
+        return {
+          id: p.id,
+          name: p.name,
+          category: p.category,
+          price: p.price,
+          image: p.imagesByColor[p.colors[0]]?.[0] || "",
+          href: `/femme/${p.slug}`,
+          isNew: p.isNew,
+          colors: p.colors,
+          epuise: stockTotal <= 0,
+        };
+      });
       setAllItems(cards);
       setLoading(false);
     });
@@ -363,12 +371,22 @@ function FemmeContent() {
                     <Link key={product.id} href={product.href} className="group block">
                       <div className="relative aspect-[3/4] w-full overflow-hidden bg-[#EFE9DC] mb-2 sm:mb-3">
                         <div
-                          className="absolute inset-0 bg-cover bg-center transition-transform duration-700 ease-out group-hover:scale-105"
+                          className={`absolute inset-0 bg-cover bg-center transition-transform duration-700 ease-out group-hover:scale-105 ${
+                            product.epuise ? "opacity-50" : ""
+                          }`}
                           style={{ backgroundImage: `url('${product.image}')` }}
                           aria-hidden="true"
                         />
 
-                        {product.isNew && (
+                        {product.epuise && (
+                          <div className="absolute inset-0 flex items-center justify-center">
+                            <span className="bg-[#1A2332] text-white px-3 py-1.5 text-[8px] sm:text-[10px] tracking-[0.2em] uppercase font-semibold">
+                              Épuisé
+                            </span>
+                          </div>
+                        )}
+
+                        {product.isNew && !product.epuise && (
                           <div className="absolute top-2 left-2 sm:top-3 sm:left-3 bg-[#1A2332] text-[#F5F1EA] px-1.5 py-0.5 sm:px-2.5 sm:py-1 text-[7px] sm:text-[9px] tracking-[0.2em] uppercase font-semibold">
                             Nouveau
                           </div>

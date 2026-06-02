@@ -13,6 +13,8 @@ type Product = {
   is_new: boolean;
   images_by_color: Record<string, string[]>;
   colors: string[];
+  sizes: string[];
+  stock_by_size: Record<string, number>;
 };
 
 const categoriesHomme = ["Polos", "T-shirts", "Chemises", "Sweats", "Pulls", "Pantalons", "Vestes"];
@@ -47,7 +49,6 @@ export default function ProduitsAdmin() {
     setSelection(new Set());
   };
 
-  // Supprime un seul produit
   const supprimerUn = async (id: number): Promise<boolean> => {
     const res = await fetch(`/api/admin/produits?id=${id}`, {
       method: "DELETE",
@@ -71,7 +72,6 @@ export default function ProduitsAdmin() {
     }
   };
 
-  // Supprime tous les produits sélectionnés
   const supprimerSelection = async () => {
     if (selection.size === 0) return;
     if (!confirm(`Supprimer ${selection.size} produit(s) ? Cette action est définitive.`)) return;
@@ -85,7 +85,6 @@ export default function ProduitsAdmin() {
       if (!ok) echecs.push(id);
     }
 
-    // On retire de la liste tous ceux qui ont été supprimés avec succès
     const supprimes = ids.filter((id) => !echecs.includes(id));
     setProducts((prev) => prev.filter((p) => !supprimes.includes(p.id)));
     setSelection(new Set());
@@ -105,7 +104,6 @@ export default function ProduitsAdmin() {
     return true;
   });
 
-  // Coche/décoche un produit
   const toggleSelection = (id: number) => {
     setSelection((prev) => {
       const next = new Set(prev);
@@ -115,7 +113,6 @@ export default function ProduitsAdmin() {
     });
   };
 
-  // Coche/décoche tout ce qui est affiché
   const toggleToutSelectionner = () => {
     const idsAffichés = produitsFiltres.map((p) => p.id);
     const tousSélectionnés = idsAffichés.every((id) => selection.has(id));
@@ -128,6 +125,10 @@ export default function ProduitsAdmin() {
 
   const tousAffichésSelectionnes =
     produitsFiltres.length > 0 && produitsFiltres.every((p) => selection.has(p.id));
+
+  // Calcule le stock total d'un produit
+  const stockTotal = (p: Product) =>
+    Object.values(p.stock_by_size || {}).reduce((sum, q) => sum + (Number(q) || 0), 0);
 
   return (
     <div className="min-h-screen bg-[#F5F1EA]">
@@ -242,6 +243,7 @@ export default function ProduitsAdmin() {
             {produitsFiltres.map((p, i) => {
               const firstImage = p.images_by_color?.[p.colors?.[0]]?.[0] || "";
               const estSelectionne = selection.has(p.id);
+              const stock = stockTotal(p);
               return (
                 <div
                   key={p.id}
@@ -249,7 +251,6 @@ export default function ProduitsAdmin() {
                     i !== produitsFiltres.length - 1 ? "border-b border-[#1A2332]/10" : ""
                   } ${estSelectionne ? "bg-[#B8985A]/10" : ""}`}
                 >
-                  {/* Case à cocher */}
                   <input
                     type="checkbox"
                     checked={estSelectionne}
@@ -257,19 +258,47 @@ export default function ProduitsAdmin() {
                     className="flex-shrink-0"
                     style={{ cursor: "pointer" }}
                   />
-                  {/* Miniature */}
                   <div
                     className="w-12 h-16 bg-[#EFE9DC] bg-cover bg-center flex-shrink-0"
                     style={firstImage ? { backgroundImage: `url('${firstImage}')` } : {}}
                   />
-                  {/* Infos */}
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold text-[#1A2332] truncate">{p.name}</p>
                     <p className="text-xs text-[#1A2332]/50">
                       {p.category} · {p.gender} · {p.price}€ {p.is_new && "· Nouveau"}
                     </p>
+                    {/* Stock détaillé par taille */}
+                    <div className="mt-1.5">
+                      {stock === 0 ? (
+                        <span className="inline-block px-2 py-0.5 text-[10px] tracking-[0.1em] uppercase font-semibold bg-red-100 text-red-700">
+                          Épuisé
+                        </span>
+                      ) : (
+                        <div className="flex flex-wrap gap-1.5">
+                          {(p.sizes || []).map((taille) => {
+                            const q = Number(p.stock_by_size?.[taille]) || 0;
+                            return (
+                              <span
+                                key={taille}
+                                className={`inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-semibold border ${
+                                  q === 0
+                                    ? "border-red-200 bg-red-50 text-red-500"
+                                    : q <= 2
+                                    ? "border-[#B8985A]/40 bg-[#B8985A]/10 text-[#8a6d35]"
+                                    : "border-[#1A2332]/15 bg-[#EFE9DC] text-[#1A2332]"
+                                }`}
+                                title={q === 0 ? "Épuisé" : `${q} en stock`}
+                              >
+                                <span className="uppercase tracking-wide">{taille}</span>
+                                <span className="opacity-60">·</span>
+                                <span>{q}</span>
+                              </span>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
                   </div>
-                  {/* Actions */}
                   <div className="flex gap-2 flex-shrink-0">
                     <Link
                       href={`/admin/produits/${p.id}`}
