@@ -23,10 +23,12 @@ export default function ProduitsAdmin() {
   const [loading, setLoading] = useState(true);
   const [filtreGenre, setFiltreGenre] = useState<"tous" | "homme" | "femme">("tous");
   const [filtreCategorie, setFiltreCategorie] = useState<string>("Toutes");
+  const [selection, setSelection] = useState<Set<number>>(new Set());
+  const [suppressionEnCours, setSuppressionEnCours] = useState(false);
 
   const chargerProduits = () => {
     setLoading(true);
-    fetch("/api/admin/produits")
+    fetch("/api/admin/produits", { credentials: "include" })
       .then((r) => r.json())
       .then((data) => {
         setProducts(data.products || []);
@@ -42,15 +44,55 @@ export default function ProduitsAdmin() {
   const changerGenre = (g: "tous" | "homme" | "femme") => {
     setFiltreGenre(g);
     setFiltreCategorie("Toutes");
+    setSelection(new Set());
+  };
+
+  // Supprime un seul produit
+  const supprimerUn = async (id: number): Promise<boolean> => {
+    const res = await fetch(`/api/admin/produits?id=${id}`, {
+      method: "DELETE",
+      credentials: "include",
+    });
+    return res.ok;
   };
 
   const supprimer = async (id: number, nom: string) => {
     if (!confirm(`Supprimer "${nom}" ? Cette action est définitive.`)) return;
-    const res = await fetch(`/api/admin/produits?id=${id}`, { method: "DELETE" });
-    if (res.ok) {
+    const ok = await supprimerUn(id);
+    if (ok) {
       setProducts((prev) => prev.filter((p) => p.id !== id));
+      setSelection((prev) => {
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
     } else {
       alert("Erreur lors de la suppression.");
+    }
+  };
+
+  // Supprime tous les produits sélectionnés
+  const supprimerSelection = async () => {
+    if (selection.size === 0) return;
+    if (!confirm(`Supprimer ${selection.size} produit(s) ? Cette action est définitive.`)) return;
+
+    setSuppressionEnCours(true);
+    const ids = Array.from(selection);
+    const echecs: number[] = [];
+
+    for (const id of ids) {
+      const ok = await supprimerUn(id);
+      if (!ok) echecs.push(id);
+    }
+
+    // On retire de la liste tous ceux qui ont été supprimés avec succès
+    const supprimes = ids.filter((id) => !echecs.includes(id));
+    setProducts((prev) => prev.filter((p) => !supprimes.includes(p.id)));
+    setSelection(new Set());
+    setSuppressionEnCours(false);
+
+    if (echecs.length > 0) {
+      alert(`${echecs.length} produit(s) n'ont pas pu être supprimés. Réessaie.`);
     }
   };
 
@@ -62,6 +104,30 @@ export default function ProduitsAdmin() {
     if (filtreCategorie !== "Toutes" && p.category !== filtreCategorie) return false;
     return true;
   });
+
+  // Coche/décoche un produit
+  const toggleSelection = (id: number) => {
+    setSelection((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  // Coche/décoche tout ce qui est affiché
+  const toggleToutSelectionner = () => {
+    const idsAffichés = produitsFiltres.map((p) => p.id);
+    const tousSélectionnés = idsAffichés.every((id) => selection.has(id));
+    if (tousSélectionnés) {
+      setSelection(new Set());
+    } else {
+      setSelection(new Set(idsAffichés));
+    }
+  };
+
+  const tousAffichésSelectionnes =
+    produitsFiltres.length > 0 && produitsFiltres.every((p) => selection.has(p.id));
 
   return (
     <div className="min-h-screen bg-[#F5F1EA]">
@@ -118,7 +184,7 @@ export default function ProduitsAdmin() {
         {filtreGenre !== "tous" && (
           <div className="flex flex-wrap gap-2 mb-6">
             <button
-              onClick={() => setFiltreCategorie("Toutes")}
+              onClick={() => { setFiltreCategorie("Toutes"); setSelection(new Set()); }}
               className={`px-3 py-1.5 text-[10px] tracking-[0.15em] uppercase font-semibold transition-all border ${
                 filtreCategorie === "Toutes"
                   ? "bg-[#B8985A] text-white border-[#B8985A]"
@@ -130,7 +196,7 @@ export default function ProduitsAdmin() {
             {categoriesDisponibles.map((cat) => (
               <button
                 key={cat}
-                onClick={() => setFiltreCategorie(cat)}
+                onClick={() => { setFiltreCategorie(cat); setSelection(new Set()); }}
                 className={`px-3 py-1.5 text-[10px] tracking-[0.15em] uppercase font-semibold transition-all border ${
                   filtreCategorie === cat
                     ? "bg-[#B8985A] text-white border-[#B8985A]"
@@ -143,6 +209,30 @@ export default function ProduitsAdmin() {
           </div>
         )}
 
+        {/* Barre de sélection */}
+        {produitsFiltres.length > 0 && (
+          <div className="flex items-center justify-between mb-3 px-4 py-2 bg-[#EFE9DC] border border-[#1A2332]/10">
+            <label className="flex items-center gap-2 cursor-pointer text-[11px] tracking-[0.15em] uppercase text-[#1A2332] font-semibold">
+              <input
+                type="checkbox"
+                checked={tousAffichésSelectionnes}
+                onChange={toggleToutSelectionner}
+              />
+              Tout sélectionner
+            </label>
+            {selection.size > 0 && (
+              <button
+                onClick={supprimerSelection}
+                disabled={suppressionEnCours}
+                className="px-4 py-1.5 text-[10px] tracking-[0.15em] uppercase font-semibold text-white bg-red-600 hover:bg-red-700 transition-colors disabled:opacity-50"
+                style={{ cursor: suppressionEnCours ? "not-allowed" : "pointer" }}
+              >
+                {suppressionEnCours ? "Suppression..." : `Supprimer la sélection (${selection.size})`}
+              </button>
+            )}
+          </div>
+        )}
+
         {loading ? (
           <p className="text-center py-20 text-[#1A2332]/40 text-sm">Chargement des produits...</p>
         ) : produitsFiltres.length === 0 ? (
@@ -151,23 +241,35 @@ export default function ProduitsAdmin() {
           <div className="bg-white border border-[#1A2332]/10 overflow-hidden">
             {produitsFiltres.map((p, i) => {
               const firstImage = p.images_by_color?.[p.colors?.[0]]?.[0] || "";
+              const estSelectionne = selection.has(p.id);
               return (
                 <div
                   key={p.id}
                   className={`flex items-center gap-4 px-4 py-3 ${
                     i !== produitsFiltres.length - 1 ? "border-b border-[#1A2332]/10" : ""
-                  }`}
+                  } ${estSelectionne ? "bg-[#B8985A]/10" : ""}`}
                 >
+                  {/* Case à cocher */}
+                  <input
+                    type="checkbox"
+                    checked={estSelectionne}
+                    onChange={() => toggleSelection(p.id)}
+                    className="flex-shrink-0"
+                    style={{ cursor: "pointer" }}
+                  />
+                  {/* Miniature */}
                   <div
                     className="w-12 h-16 bg-[#EFE9DC] bg-cover bg-center flex-shrink-0"
                     style={firstImage ? { backgroundImage: `url('${firstImage}')` } : {}}
                   />
+                  {/* Infos */}
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold text-[#1A2332] truncate">{p.name}</p>
                     <p className="text-xs text-[#1A2332]/50">
                       {p.category} · {p.gender} · {p.price}€ {p.is_new && "· Nouveau"}
                     </p>
                   </div>
+                  {/* Actions */}
                   <div className="flex gap-2 flex-shrink-0">
                     <Link
                       href={`/admin/produits/${p.id}`}
