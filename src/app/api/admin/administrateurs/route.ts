@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth, clerkClient } from "@clerk/nextjs/server";
 import { getAdminInfo, estOwnerPermanent, aAcces, MODULES } from "@/lib/admin";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
+import { enregistrerLog, contexteRequete } from "@/lib/logs";
 
 // Récupère l'email de l'appelant via auth() (fiable)
 async function emailAppelant(): Promise<string | null> {
@@ -14,6 +15,12 @@ async function emailAppelant(): Promise<string | null> {
   } catch {
     return null;
   }
+}
+
+// Nom de l'acteur (pour les logs)
+async function nomActeur(email: string | null): Promise<string> {
+  const info = await getAdminInfo(email);
+  return info ? (info.nom || `${info.prenom} ${info.nomFamille}`.trim()) : "";
 }
 
 // Vérifie que l'appelant a une action précise sur le module "admins"
@@ -66,7 +73,7 @@ export async function GET() {
   return NextResponse.json({ admins: data });
 }
 
-// POST : ajouter ou modifier un admin — nécessite "ajouter" OU "modifier"
+// POST : ajouter ou modifier un admin — owner uniquement
 export async function POST(req: NextRequest) {
   const email_appelant = await emailAppelant();
   // Seul l'owner permanent peut ajouter/modifier des accès
@@ -95,6 +102,13 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  // État AVANT (l'admin complet s'il existait déjà)
+  const { data: avant } = await supabaseAdmin
+    .from("admins")
+    .select("*")
+    .eq("email", email)
+    .maybeSingle();
+
   // Qui crée/modifie cet accès (pour la traçabilité)
   const ajoutePar = email_appelant || "";
 
@@ -120,10 +134,26 @@ export async function POST(req: NextRequest) {
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
+
+  // Log
+  const ctx = contexteRequete(req);
+  await enregistrerLog({
+    acteurEmail: email_appelant,
+    acteurNom: await nomActeur(email_appelant),
+    module: "admins",
+    action: avant ? "modifier" : "ajouter",
+    cible: email,
+    details: { role, permissions },
+    etatAvant: avant ?? null,
+    etatApres: data,
+    adresseIp: ctx.adresseIp,
+    userAgent: ctx.userAgent,
+  });
+
   return NextResponse.json({ admin: data });
 }
 
-// DELETE : retirer un admin — nécessite "retirer"
+// DELETE : retirer un admin — owner uniquement
 export async function DELETE(req: NextRequest) {
   const email_appelant = await emailAppelant();
   // Seul l'owner permanent peut retirer un accès
@@ -145,9 +175,31 @@ export async function DELETE(req: NextRequest) {
     );
   }
 
+  // État AVANT (l'admin complet avant suppression)
+  const { data: avant } = await supabaseAdmin
+    .from("admins")
+    .select("*")
+    .eq("email", email)
+    .maybeSingle();
+
   const { error } = await supabaseAdmin.from("admins").delete().eq("email", email);
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
+
+  // Log
+  const ctx = contexteRequete(req);
+  await enregistrerLog({
+    acteurEmail: email_appelant,
+    acteurNom: await nomActeur(email_appelant),
+    module: "admins",
+    action: "retirer",
+    cible: email,
+    etatAvant: avant ?? null,
+    etatApres: null,
+    adresseIp: ctx.adresseIp,
+    userAgent: ctx.userAgent,
+  });
+
   return NextResponse.json({ success: true });
 }

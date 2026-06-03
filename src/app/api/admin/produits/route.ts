@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth, clerkClient } from "@clerk/nextjs/server";
-import { aAcces } from "@/lib/admin";
+import { aAcces, getAdminInfo } from "@/lib/admin";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
+import { enregistrerLog, contexteRequete } from "@/lib/logs";
 
 // Récupère l'email de l'appelant (via auth() = fiable)
 async function emailAppelant(): Promise<string | null> {
@@ -14,6 +15,14 @@ async function emailAppelant(): Promise<string | null> {
   } catch {
     return null;
   }
+}
+
+// Email + nom de l'acteur (pour les logs)
+async function infosActeur(): Promise<{ email: string | null; nom: string }> {
+  const email = await emailAppelant();
+  const info = await getAdminInfo(email);
+  const nom = info ? (info.nom || `${info.prenom} ${info.nomFamille}`.trim()) : "";
+  return { email, nom };
 }
 
 // Vérifie que l'appelant a le droit d'effectuer une action précise sur "produits"
@@ -71,6 +80,23 @@ export async function POST(req: NextRequest) {
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
+
+  // Log
+  const acteur = await infosActeur();
+  const ctx = contexteRequete(req);
+  await enregistrerLog({
+    acteurEmail: acteur.email,
+    acteurNom: acteur.nom,
+    module: "produits",
+    action: "creer",
+    cible: data?.name || body.name || "",
+    details: { id: data?.id, slug: data?.slug },
+    etatAvant: null,
+    etatApres: data,
+    adresseIp: ctx.adresseIp,
+    userAgent: ctx.userAgent,
+  });
+
   return NextResponse.json({ product: data });
 }
 
@@ -84,6 +110,13 @@ export async function PUT(req: NextRequest) {
   if (!body.id) {
     return NextResponse.json({ error: "ID manquant" }, { status: 400 });
   }
+
+  // État AVANT (le produit complet, toutes colonnes)
+  const { data: avant } = await supabaseAdmin
+    .from("catalog_items")
+    .select("*")
+    .eq("id", body.id)
+    .maybeSingle();
 
   const { data, error } = await supabaseAdmin
     .from("catalog_items")
@@ -111,6 +144,23 @@ export async function PUT(req: NextRequest) {
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
+
+  // Log
+  const acteur = await infosActeur();
+  const ctx = contexteRequete(req);
+  await enregistrerLog({
+    acteurEmail: acteur.email,
+    acteurNom: acteur.nom,
+    module: "produits",
+    action: "modifier",
+    cible: data?.name || body.name || "",
+    details: { id: body.id, slug: body.slug },
+    etatAvant: avant ?? null,
+    etatApres: data,
+    adresseIp: ctx.adresseIp,
+    userAgent: ctx.userAgent,
+  });
+
   return NextResponse.json({ product: data });
 }
 
@@ -126,6 +176,13 @@ export async function DELETE(req: NextRequest) {
     return NextResponse.json({ error: "ID manquant" }, { status: 400 });
   }
 
+  // État AVANT (le produit complet, toutes colonnes) — sert au log et à la cible
+  const { data: produit } = await supabaseAdmin
+    .from("catalog_items")
+    .select("*")
+    .eq("id", id)
+    .maybeSingle();
+
   const { error } = await supabaseAdmin
     .from("catalog_items")
     .delete()
@@ -134,5 +191,22 @@ export async function DELETE(req: NextRequest) {
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
+
+  // Log
+  const acteur = await infosActeur();
+  const ctx = contexteRequete(req);
+  await enregistrerLog({
+    acteurEmail: acteur.email,
+    acteurNom: acteur.nom,
+    module: "produits",
+    action: "supprimer",
+    cible: produit?.name || `Produit #${id}`,
+    details: { id, slug: produit?.slug },
+    etatAvant: produit ?? null,
+    etatApres: null,
+    adresseIp: ctx.adresseIp,
+    userAgent: ctx.userAgent,
+  });
+
   return NextResponse.json({ success: true });
 }

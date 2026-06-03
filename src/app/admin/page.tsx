@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { currentUser } from "@clerk/nextjs/server";
-import { getAdminInfo } from "@/lib/admin";
+import { getAdminInfo, estOwnerPermanent } from "@/lib/admin";
 import AdminDashboard from "./AdminDashboard";
 
 export const metadata = {
@@ -21,5 +21,5 @@ export default async function AdminPage() {
   const peutGererAdmins =
     info.role === "owner" || (info.permissions["admins"] || []).length > 0;
 
-  return <AdminDashboard email={info.email} peutGererAdmins={peutGererAdmins} />;
+  return <AdminDashboard email={info.email} peutGererAdmins={peutGererAdmins} estOwner={estOwnerPermanent(email)} />;
 }

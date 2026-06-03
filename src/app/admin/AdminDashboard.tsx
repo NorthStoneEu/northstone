@@ -13,14 +13,16 @@ type Product = {
 export default function AdminDashboard({
   email,
   peutGererAdmins = false,
+  estOwner = false,
 }: {
   email: string;
   peutGererAdmins?: boolean;
+  estOwner?: boolean;
 }) {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Sections du back-office (la carte "Gestion des accès" n'apparaît que si autorisé)
+  // Sections du back-office (certaines cartes sont conditionnelles)
   const sections = [
     { titre: "Produits", desc: "Gérer la collection permanente", href: "/admin/produits", actif: true },
     { titre: "Drops", desc: "Créer et gérer les drops", href: "/admin/drops", actif: false },
@@ -28,6 +30,9 @@ export default function AdminDashboard({
     { titre: "Authentification", desc: "Pièces et puces NFC", href: "/admin/authentification", actif: false },
     ...(peutGererAdmins
       ? [{ titre: "Gestion des accès", desc: "Collaborateurs et permissions", href: "/admin/administrateurs", actif: true }]
+      : []),
+    ...(estOwner
+      ? [{ titre: "Journal d'activité", desc: "Historique des actions admin", href: "/admin/journal", actif: true }]
       : []),
   ];
 
