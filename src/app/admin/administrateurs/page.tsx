@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { currentUser } from "@clerk/nextjs/server";
-import { getAdminInfo } from "@/lib/admin";
+import { getAdminInfo, estOwnerPermanent } from "@/lib/admin";
 import AdminsManager from "./AdminsManager";
 
 export const metadata = {
@@ -19,5 +19,5 @@ export default async function AdministrateursPage() {
     redirect("/");
   }
 
-  return <AdminsManager />;
+  return <AdminsManager estOwner={estOwnerPermanent(email)} />;
 }

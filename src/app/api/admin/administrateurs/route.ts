@@ -69,10 +69,9 @@ export async function GET() {
 // POST : ajouter ou modifier un admin — nécessite "ajouter" OU "modifier"
 export async function POST(req: NextRequest) {
   const email_appelant = await emailAppelant();
-  const peutAjouter = await aAcces(email_appelant, "admins", "ajouter");
-  const peutModifier = await aAcces(email_appelant, "admins", "modifier");
-  if (!peutAjouter && !peutModifier) {
-    return NextResponse.json({ error: "Non autorisé" }, { status: 403 });
+  // Seul l'owner permanent peut ajouter/modifier des accès
+  if (!estOwnerPermanent(email_appelant)) {
+    return NextResponse.json({ error: "Seul l'administrateur principal peut gérer les accès." }, { status: 403 });
   }
 
   const body = await req.json();
@@ -126,8 +125,10 @@ export async function POST(req: NextRequest) {
 
 // DELETE : retirer un admin — nécessite "retirer"
 export async function DELETE(req: NextRequest) {
-  if (!(await aActionAdmins("retirer"))) {
-    return NextResponse.json({ error: "Non autorisé" }, { status: 403 });
+  const email_appelant = await emailAppelant();
+  // Seul l'owner permanent peut retirer un accès
+  if (!estOwnerPermanent(email_appelant)) {
+    return NextResponse.json({ error: "Seul l'administrateur principal peut gérer les accès." }, { status: 403 });
   }
 
   const { searchParams } = new URL(req.url);
