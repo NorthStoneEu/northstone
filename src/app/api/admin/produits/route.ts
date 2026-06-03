@@ -1,25 +1,30 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth, clerkClient } from "@clerk/nextjs/server";
-import { isAdmin } from "@/lib/admin";
+import { aAcces } from "@/lib/admin";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
-// Vérifie que l'appelant est bien un admin (via auth() = fiable et rapide)
-async function verifierAdmin() {
+// Récupère l'email de l'appelant (via auth() = fiable)
+async function emailAppelant(): Promise<string | null> {
   const { userId } = await auth();
-  if (!userId) return false;
+  if (!userId) return null;
   try {
     const client = await clerkClient();
     const user = await client.users.getUser(userId);
-    const email = user.emailAddresses?.[0]?.emailAddress;
-    return await isAdmin(email);
+    return user.emailAddresses?.[0]?.emailAddress?.toLowerCase() || null;
   } catch {
-    return false;
+    return null;
   }
 }
 
-// GET : liste tous les produits (pour l'admin)
+// Vérifie que l'appelant a le droit d'effectuer une action précise sur "produits"
+async function verifierAcces(action: string): Promise<boolean> {
+  const email = await emailAppelant();
+  return await aAcces(email, "produits", action);
+}
+
+// GET : liste tous les produits (pour l'admin) — nécessite "voir"
 export async function GET() {
-  if (!(await verifierAdmin())) {
+  if (!(await verifierAcces("voir"))) {
     return NextResponse.json({ error: "Non autorisé" }, { status: 403 });
   }
 
@@ -34,9 +39,9 @@ export async function GET() {
   return NextResponse.json({ products: data });
 }
 
-// POST : créer un nouveau produit
+// POST : créer un nouveau produit — nécessite "creer"
 export async function POST(req: NextRequest) {
-  if (!(await verifierAdmin())) {
+  if (!(await verifierAcces("creer"))) {
     return NextResponse.json({ error: "Non autorisé" }, { status: 403 });
   }
 
@@ -69,9 +74,9 @@ export async function POST(req: NextRequest) {
   return NextResponse.json({ product: data });
 }
 
-// PUT : modifier un produit existant
+// PUT : modifier un produit existant — nécessite "modifier"
 export async function PUT(req: NextRequest) {
-  if (!(await verifierAdmin())) {
+  if (!(await verifierAcces("modifier"))) {
     return NextResponse.json({ error: "Non autorisé" }, { status: 403 });
   }
 
@@ -109,9 +114,9 @@ export async function PUT(req: NextRequest) {
   return NextResponse.json({ product: data });
 }
 
-// DELETE : supprimer un produit
+// DELETE : supprimer un produit — nécessite "supprimer"
 export async function DELETE(req: NextRequest) {
-  if (!(await verifierAdmin())) {
+  if (!(await verifierAcces("supprimer"))) {
     return NextResponse.json({ error: "Non autorisé" }, { status: 403 });
   }
 

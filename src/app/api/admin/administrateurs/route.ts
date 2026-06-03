@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth, clerkClient } from "@clerk/nextjs/server";
-import { getAdminInfo, estOwnerPermanent, MODULES } from "@/lib/admin";
+import { getAdminInfo, estOwnerPermanent, aAcces, MODULES } from "@/lib/admin";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
 // Récupère l'email de l'appelant via auth() (fiable)
@@ -16,14 +16,10 @@ async function emailAppelant(): Promise<string | null> {
   }
 }
 
-// Vérifie que l'appelant a le droit de gérer les admins (owner OU module "admins")
-async function peutGererAdmins(): Promise<boolean> {
+// Vérifie que l'appelant a une action précise sur le module "admins"
+async function aActionAdmins(action: string): Promise<boolean> {
   const email = await emailAppelant();
-  const info = await getAdminInfo(email);
-  if (!info) return false;
-  if (info.role === "owner") return true;
-  const actionsAdmins = info.permissions["admins"] || [];
-  return actionsAdmins.length > 0;
+  return await aAcces(email, "admins", action);
 }
 
 // Valide les permissions envoyées et reconstruit un objet propre.
@@ -54,9 +50,9 @@ function nettoyerPermissions(perms: any): Record<string, string[]> {
   return result;
 }
 
-// GET : liste les admins additionnels (ceux en base, pas l'owner permanent)
+// GET : liste les admins additionnels — nécessite "voir"
 export async function GET() {
-  if (!(await peutGererAdmins())) {
+  if (!(await aActionAdmins("voir"))) {
     return NextResponse.json({ error: "Non autorisé" }, { status: 403 });
   }
   const { data, error } = await supabaseAdmin
@@ -70,9 +66,12 @@ export async function GET() {
   return NextResponse.json({ admins: data });
 }
 
-// POST : ajouter ou modifier un admin
+// POST : ajouter ou modifier un admin — nécessite "ajouter" OU "modifier"
 export async function POST(req: NextRequest) {
-  if (!(await peutGererAdmins())) {
+  const email_appelant = await emailAppelant();
+  const peutAjouter = await aAcces(email_appelant, "admins", "ajouter");
+  const peutModifier = await aAcces(email_appelant, "admins", "modifier");
+  if (!peutAjouter && !peutModifier) {
     return NextResponse.json({ error: "Non autorisé" }, { status: 403 });
   }
 
@@ -98,7 +97,7 @@ export async function POST(req: NextRequest) {
   }
 
   // Qui crée/modifie cet accès (pour la traçabilité)
-  const ajoutePar = (await emailAppelant()) || "";
+  const ajoutePar = email_appelant || "";
 
   // upsert : insère ou met à jour selon l'email (unique)
   const { data, error } = await supabaseAdmin
@@ -125,9 +124,9 @@ export async function POST(req: NextRequest) {
   return NextResponse.json({ admin: data });
 }
 
-// DELETE : retirer un admin
+// DELETE : retirer un admin — nécessite "retirer"
 export async function DELETE(req: NextRequest) {
-  if (!(await peutGererAdmins())) {
+  if (!(await aActionAdmins("retirer"))) {
     return NextResponse.json({ error: "Non autorisé" }, { status: 403 });
   }
 
