@@ -13,6 +13,8 @@ export default function TwoFAView() {
   const [modeSecours, setModeSecours] = useState(false);
   const [codesSecours, setCodesSecours] = useState<string[]>([]);
   const [copie, setCopie] = useState(false);
+  const [sauvegardeFaite, setSauvegardeFaite] = useState(false); // a téléchargé ou copié
+  const [confirme, setConfirme] = useState(false); // case cochée
 
   // Au chargement : déterminer la phase (config ou usage)
   useEffect(() => {
@@ -24,14 +26,12 @@ export default function TwoFAView() {
           return;
         }
         if (data.sessionValide) {
-          // Déjà validé → on retourne à l'admin
           router.push("/admin");
           return;
         }
         if (data.configuree) {
           setPhase("usage");
         } else {
-          // Démarrer la configuration
           demarrerConfig();
         }
       })
@@ -69,13 +69,11 @@ export default function TwoFAView() {
       return;
     }
 
-    // Première activation → afficher les codes de secours
     if (data.premierActivation && data.codesSecours) {
       setCodesSecours(data.codesSecours);
       return;
     }
 
-    // Sinon → accès accordé
     router.push("/admin");
   };
 
@@ -103,12 +101,14 @@ export default function TwoFAView() {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
+    setSauvegardeFaite(true);
   };
 
   const copierCodes = async () => {
     try {
       await navigator.clipboard.writeText(contenuCodes());
       setCopie(true);
+      setSauvegardeFaite(true);
       setTimeout(() => setCopie(false), 2000);
     } catch {
       setErreur("Impossible de copier. Téléchargez plutôt le fichier.");
@@ -117,6 +117,7 @@ export default function TwoFAView() {
 
   // Écran : codes de secours à noter (après 1ère activation)
   if (codesSecours.length > 0) {
+    const peutContinuer = confirme && sauvegardeFaite;
     return (
       <div className="min-h-screen bg-[#F5F1EA] flex items-center justify-center px-6 py-10">
         <div className="bg-white border border-[#1A2332]/10 p-8 max-w-md w-full">
@@ -124,7 +125,7 @@ export default function TwoFAView() {
             Codes de secours
           </h1>
           <p className="text-sm text-[#1A2332]/60 mb-5">
-            ⚠️ Notez ces codes et gardez-les en lieu sûr. Ils vous permettront d'accéder à l'admin si vous perdez votre téléphone. Chaque code ne fonctionne qu'une seule fois. <strong>Ils ne seront plus jamais affichés.</strong>
+            ⚠️ Ces codes sont votre <strong>seul moyen d'accès</strong> si vous perdez votre téléphone. Chaque code ne fonctionne qu'une seule fois. <strong>Ils ne seront plus jamais affichés.</strong> Conservez-les dans un endroit sûr (gestionnaire de mots de passe, coffre, papier rangé).
           </p>
           <div className="grid grid-cols-2 gap-2 mb-4 bg-[#F5F1EA] p-4 border border-[#1A2332]/10">
             {codesSecours.map((c) => (
@@ -135,7 +136,7 @@ export default function TwoFAView() {
           </div>
 
           {/* Boutons télécharger / copier */}
-          <div className="flex gap-2 mb-6">
+          <div className="flex gap-2 mb-4">
             <button
               onClick={telechargerCodes}
               className="flex-1 flex items-center justify-center gap-2 border border-[#1A2332]/20 px-4 py-2.5 text-[10px] tracking-[0.15em] uppercase text-[#1A2332] hover:border-[#B8985A] hover:text-[#B8985A] transition-colors"
@@ -161,12 +162,30 @@ export default function TwoFAView() {
             </button>
           </div>
 
+          {!sauvegardeFaite && (
+            <p className="text-[11px] text-[#B8985A] mb-3">
+              Téléchargez ou copiez vos codes avant de continuer.
+            </p>
+          )}
+
+          {/* Confirmation obligatoire */}
+          <label className="flex items-start gap-2.5 cursor-pointer mb-5 text-sm text-[#1A2332]/80">
+            <input
+              type="checkbox"
+              checked={confirme}
+              onChange={(e) => setConfirme(e.target.checked)}
+              className="mt-0.5"
+            />
+            <span>Je confirme avoir sauvegardé ces codes en lieu sûr et compris qu'ils ne seront plus affichés.</span>
+          </label>
+
           <button
             onClick={() => router.push("/admin")}
-            className="w-full bg-black text-[#B8985A] px-6 py-3 text-[11px] tracking-[0.2em] uppercase font-semibold hover:bg-[#1F1F1F] transition-all"
-            style={{ cursor: "pointer" }}
+            disabled={!peutContinuer}
+            className="w-full bg-black text-[#B8985A] px-6 py-3 text-[11px] tracking-[0.2em] uppercase font-semibold hover:bg-[#1F1F1F] transition-all disabled:opacity-40"
+            style={{ cursor: peutContinuer ? "pointer" : "not-allowed" }}
           >
-            J'ai noté mes codes — Continuer
+            Continuer vers l'administration
           </button>
         </div>
       </div>
@@ -185,16 +204,44 @@ export default function TwoFAView() {
             <h1 className="text-xl font-black tracking-tight text-[#1A2332] mb-2">
               Configurer la double authentification
             </h1>
-            <p className="text-sm text-[#1A2332]/60 mb-5">
-              1. Installez <strong>Google Authenticator</strong> (ou Authy) sur votre téléphone.<br />
-              2. Scannez ce QR code.<br />
-              3. Entrez le code à 6 chiffres affiché.
+            <p className="text-sm text-[#1A2332]/60 mb-6">
+              Pour sécuriser l'accès à l'administration, vous devez configurer une application d'authentification. Cela ne prend qu'une minute.
             </p>
+            <div className="mb-6 space-y-4">
+              <div className="flex gap-3">
+                <span className="flex-shrink-0 w-6 h-6 rounded-full bg-[#1A2332] text-[#B8985A] text-[11px] font-semibold flex items-center justify-center">1</span>
+                <p className="text-sm text-[#1A2332]/80 leading-relaxed">
+                  Installez une application d'authentification sur votre téléphone :<br />
+                  <strong>Google Authenticator</strong>, Authy ou Microsoft Authenticator.
+                </p>
+              </div>
+              <div className="flex gap-3">
+                <span className="flex-shrink-0 w-6 h-6 rounded-full bg-[#1A2332] text-[#B8985A] text-[11px] font-semibold flex items-center justify-center">2</span>
+                <p className="text-sm text-[#1A2332]/80 leading-relaxed">
+                  Ouvrez l'application, appuyez sur <strong>+</strong>, puis choisissez <strong>« Scanner un QR code »</strong>.
+                </p>
+              </div>
+              <div className="flex gap-3">
+                <span className="flex-shrink-0 w-6 h-6 rounded-full bg-[#1A2332] text-[#B8985A] text-[11px] font-semibold flex items-center justify-center">3</span>
+                <p className="text-sm text-[#1A2332]/80 leading-relaxed">
+                  Scannez le QR code ci-dessous. Un compte <strong>« Northstone Admin »</strong> apparaîtra, associé à votre adresse e-mail.
+                </p>
+              </div>
+              <div className="flex gap-3">
+                <span className="flex-shrink-0 w-6 h-6 rounded-full bg-[#1A2332] text-[#B8985A] text-[11px] font-semibold flex items-center justify-center">4</span>
+                <p className="text-sm text-[#1A2332]/80 leading-relaxed">
+                  Entrez ci-dessous le <strong>code à 6 chiffres</strong> affiché par l'application. Il change automatiquement toutes les 30 secondes.
+                </p>
+              </div>
+            </div>
             {qrCode && (
-              <div className="flex justify-center mb-5">
+              <div className="flex justify-center mb-4">
                 <img src={qrCode} alt="QR code 2FA" className="w-48 h-48 border border-[#1A2332]/10" />
               </div>
             )}
+            <p className="text-[11px] text-[#1A2332]/40 mb-5 text-center">
+              🔒 Ne partagez jamais ce QR code ni vos codes avec personne.
+            </p>
           </>
         )}
 
@@ -214,7 +261,7 @@ export default function TwoFAView() {
         {(phase === "config" || phase === "usage") && (
           <>
             <input
-              autoFocus
+              autoFocus={phase === "usage"}
               className="w-full bg-transparent border border-[#1A2332]/20 px-3 py-3 text-center text-lg tracking-[0.3em] text-[#1A2332] focus:outline-none focus:border-[#B8985A] transition-colors mb-3"
               placeholder={modeSecours ? "XXXX-XXXX" : "123456"}
               value={code}
