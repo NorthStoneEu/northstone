@@ -87,7 +87,6 @@ export async function POST(req: NextRequest) {
   const prenom = (body.prenom || "").trim();
   const nomFamille = (body.nomFamille || "").trim();
   const poste = (body.poste || "").trim();
-  const role = body.role === "manager" ? "manager" : "editor"; // jamais "owner" via l'interface
   const permissions = nettoyerPermissions(body.permissions);
 
   if (!email || !email.includes("@")) {
@@ -122,7 +121,6 @@ export async function POST(req: NextRequest) {
         prenom,
         nom_famille: nomFamille,
         poste,
-        role,
         permissions,
         ajoute_par: ajoutePar,
       },
@@ -143,7 +141,7 @@ export async function POST(req: NextRequest) {
     module: "admins",
     action: avant ? "modifier" : "ajouter",
     cible: email,
-    details: { role, permissions },
+    details: { permissions },
     etatAvant: avant ?? null,
     etatApres: data,
     adresseIp: ctx.adresseIp,

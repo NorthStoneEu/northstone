@@ -1,6 +1,5 @@
 import { redirect } from "next/navigation";
-import { currentUser } from "@clerk/nextjs/server";
-import { isAdmin } from "@/lib/admin";
+import { verifier2fa } from "@/lib/verifier2fa";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import ProduitForm from "../../ProduitForm";
 
@@ -13,12 +12,9 @@ export default async function ModifierProduitPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  const user = await currentUser();
-  const email = user?.emailAddresses?.[0]?.emailAddress;
-
-  if (!(await isAdmin(email))) {
-    redirect("/");
-  }
+  const etat = await verifier2fa();
+  if (etat === "pas-admin") redirect("/");
+  if (etat === "2fa-requise") redirect("/admin/2fa");
 
   const { id } = await params;
 

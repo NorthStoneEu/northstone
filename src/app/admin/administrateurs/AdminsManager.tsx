@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { MODULES } from "@/lib/modules";
 
@@ -12,24 +12,73 @@ type Admin = {
   prenom?: string;
   nom_famille?: string;
   poste?: string;
-  role: string;
   permissions: Permissions;
   ajoute_par?: string;
   created_at?: string;
 };
+
+const DUREE_ACCES_MS = 10 * 60 * 1000; // 10 minutes
 
 export default function AdminsManager({ estOwner = false }: { estOwner?: boolean }) {
   const [admins, setAdmins] = useState<Admin[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
-  // Formulaire
-  const [email, setEmail] = useState("");
-  const [prenom, setPrenom] = useState("");
-  const [nomFamille, setNomFamille] = useState("");
-  const [poste, setPoste] = useState("");
-  const [role, setRole] = useState("editor");
-  const [permissions, setPermissions] = useState<Permissions>({});
+  // ── Verrou 2FA (owner uniquement) ──
+  const [deverrouille, setDeverrouille] = useState(!estOwner); // non-owner = pas de verrou (lecture seule)
+  const [codeVerrou, setCodeVerrou] = useState("");
+  const [modeSecours, setModeSecours] = useState(false);
+  const [erreurVerrou, setErreurVerrou] = useState("");
+  const [verifEnCours, setVerifEnCours] = useState(false);
+  const [tempsRestant, setTempsRestant] = useState(DUREE_ACCES_MS);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Démarre le compte à rebours une fois déverrouillé
+  useEffect(() => {
+    if (!deverrouille || !estOwner) return;
+    setTempsRestant(DUREE_ACCES_MS);
+    const debut = Date.now();
+    timerRef.current = setInterval(() => {
+      const restant = DUREE_ACCES_MS - (Date.now() - debut);
+      if (restant <= 0) {
+        setTempsRestant(0);
+        setDeverrouille(false);
+        setCodeVerrou("");
+        setModeSecours(false);
+        if (timerRef.current) clearInterval(timerRef.current);
+      } else {
+        setTempsRestant(restant);
+      }
+    }, 1000);
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, [deverrouille, estOwner]);
+
+  const verifierVerrou = async () => {
+    setErreurVerrou("");
+    setVerifEnCours(true);
+    const res = await fetch("/api/admin/2fa/sensible", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({ code: codeVerrou, estCodeSecours: modeSecours }),
+    });
+    const data = await res.json();
+    setVerifEnCours(false);
+    if (data.ok) {
+      setDeverrouille(true);
+    } else {
+      setErreurVerrou(data.error || "Code incorrect.");
+    }
+  };
+
+  const formatTimer = (ms: number) => {
+    const totalSec = Math.max(0, Math.floor(ms / 1000));
+    const min = Math.floor(totalSec / 60);
+    const sec = totalSec % 60;
+    return `${min}:${sec.toString().padStart(2, "0")}`;
+  };
 
   const charger = () => {
     setLoading(true);
@@ -48,11 +97,15 @@ export default function AdminsManager({ estOwner = false }: { estOwner?: boolean
 
   // ── Gestion des cases ──
 
-  // Une action est-elle cochée pour un module ?
   const aAction = (moduleId: string, actionId: string) =>
     (permissions[moduleId] || []).includes(actionId);
 
-  // Cocher/décocher une action précise
+  const [email, setEmail] = useState("");
+  const [prenom, setPrenom] = useState("");
+  const [nomFamille, setNomFamille] = useState("");
+  const [poste, setPoste] = useState("");
+  const [permissions, setPermissions] = useState<Permissions>({});
+
   const toggleAction = (moduleId: string, actionId: string) => {
     setPermissions((prev) => {
       const actuelles = prev[moduleId] || [];
@@ -62,15 +115,12 @@ export default function AdminsManager({ estOwner = false }: { estOwner?: boolean
       let nouvelles: string[];
 
       if (actuelles.includes(actionId)) {
-        // Décocher
         if (actionId === "voir") {
-          // Décocher "voir" → on retire tout le module (voir est prérequis)
           nouvelles = [];
         } else {
           nouvelles = actuelles.filter((a) => a !== actionId);
         }
       } else {
-        // Cocher : on ajoute l'action + "voir" (prérequis)
         nouvelles = [...actuelles, actionId];
         if (!nouvelles.includes("voir") && toutesActions.includes("voir")) {
           nouvelles.push("voir");
@@ -81,14 +131,12 @@ export default function AdminsManager({ estOwner = false }: { estOwner?: boolean
       if (nouvelles.length === 0) {
         delete copie[moduleId];
       } else {
-        // ordre stable selon MODULES
         copie[moduleId] = toutesActions.filter((a) => nouvelles.includes(a));
       }
       return copie;
     });
   };
 
-  // Tout cocher / tout décocher pour UN module
   const toggleModuleEntier = (moduleId: string) => {
     setPermissions((prev) => {
       const mod = MODULES.find((m) => m.id === moduleId);
@@ -106,7 +154,6 @@ export default function AdminsManager({ estOwner = false }: { estOwner?: boolean
     });
   };
 
-  // Tout autoriser / tout retirer (global)
   const toutEstCoche = MODULES.every((m) => {
     const actuelles = permissions[m.id] || [];
     return actuelles.length === m.actions.length;
@@ -129,7 +176,6 @@ export default function AdminsManager({ estOwner = false }: { estOwner?: boolean
     setPrenom("");
     setNomFamille("");
     setPoste("");
-    setRole("editor");
     setPermissions({});
   };
 
@@ -150,7 +196,6 @@ export default function AdminsManager({ estOwner = false }: { estOwner?: boolean
         prenom,
         nomFamille,
         poste,
-        role,
         permissions,
       }),
     });
@@ -169,7 +214,6 @@ export default function AdminsManager({ estOwner = false }: { estOwner?: boolean
     setPrenom(a.prenom || "");
     setNomFamille(a.nom_famille || "");
     setPoste(a.poste || "");
-    setRole(a.role);
     setPermissions(a.permissions && typeof a.permissions === "object" && !Array.isArray(a.permissions) ? a.permissions : {});
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
@@ -209,6 +253,74 @@ export default function AdminsManager({ estOwner = false }: { estOwner?: boolean
     "w-full bg-transparent border border-[#1A2332]/20 px-3 py-2 text-sm text-[#1A2332] focus:outline-none focus:border-[#B8985A] transition-colors";
   const labelClass = "block text-[10px] tracking-[0.25em] uppercase text-[#1A2332]/50 mb-2";
 
+  // ── Écran de verrouillage (owner non encore déverrouillé) ──
+  if (estOwner && !deverrouille) {
+    return (
+      <div className="min-h-screen bg-[#F5F1EA]">
+        <header className="bg-[#0A0A0A] text-white px-6 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Link href="/admin" className="text-lg font-black tracking-[0.2em] hover:text-[#B8985A] transition-colors">
+              NORTHSTONE
+            </Link>
+            <span className="text-[10px] tracking-[0.3em] uppercase text-[#B8985A] border border-[#B8985A]/40 px-2 py-0.5">
+              Admin
+            </span>
+          </div>
+          <Link href="/admin" className="text-xs text-white/70 hover:text-white transition-colors">
+            ← Tableau de bord
+          </Link>
+        </header>
+
+        <main className="max-w-md mx-auto px-6 py-16">
+          <div className="bg-white border border-[#1A2332]/10 p-8">
+            <div className="flex justify-center mb-4">
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#B8985A" strokeWidth="1.5">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+              </svg>
+            </div>
+            <h1 className="text-xl font-black tracking-tight text-[#1A2332] mb-2 text-center">
+              Zone sensible
+            </h1>
+            <p className="text-sm text-[#1A2332]/60 mb-6 text-center">
+              {modeSecours
+                ? "Entrez un de vos codes de secours pour accéder à la gestion des accès."
+                : "Entrez le code à 6 chiffres de votre application d'authentification pour accéder à la gestion des accès."}
+            </p>
+
+            <input
+              autoFocus
+              className="w-full bg-transparent border border-[#1A2332]/20 px-3 py-3 text-center text-lg tracking-[0.3em] text-[#1A2332] focus:outline-none focus:border-[#B8985A] transition-colors mb-3"
+              placeholder={modeSecours ? "XXXX-XXXX" : "123456"}
+              value={codeVerrou}
+              onChange={(e) => setCodeVerrou(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && verifierVerrou()}
+            />
+
+            {erreurVerrou && <p className="text-xs text-red-600 mb-3">{erreurVerrou}</p>}
+
+            <button
+              onClick={verifierVerrou}
+              disabled={verifEnCours || !codeVerrou.trim()}
+              className="w-full bg-black text-[#B8985A] px-6 py-3 text-[11px] tracking-[0.2em] uppercase font-semibold hover:bg-[#1F1F1F] transition-all disabled:opacity-40 mb-3"
+              style={{ cursor: verifEnCours ? "not-allowed" : "pointer" }}
+            >
+              {verifEnCours ? "Vérification..." : "Déverrouiller"}
+            </button>
+
+            <button
+              onClick={() => { setModeSecours(!modeSecours); setCodeVerrou(""); setErreurVerrou(""); }}
+              className="w-full text-[11px] text-[#1A2332]/50 hover:text-[#B8985A] transition-colors"
+              style={{ background: "none", cursor: "pointer" }}
+            >
+              {modeSecours ? "← Utiliser le code de l'application" : "Utiliser un code de secours"}
+            </button>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-[#F5F1EA]">
       <header className="bg-[#0A0A0A] text-white px-6 py-4 flex items-center justify-between">
@@ -226,6 +338,20 @@ export default function AdminsManager({ estOwner = false }: { estOwner?: boolean
       </header>
 
       <main className="max-w-3xl mx-auto px-6 py-10">
+        {/* Timer accès sensible (owner) */}
+        {estOwner && (
+          <div className={`flex items-center justify-between mb-6 px-4 py-2.5 border ${
+            tempsRestant <= 60000 ? "border-red-300 bg-red-50" : "border-[#B8985A]/30 bg-[#B8985A]/5"
+          }`}>
+            <span className="text-[10px] tracking-[0.2em] uppercase text-[#1A2332]/60">
+              🔓 Accès sensible actif
+            </span>
+            <span className={`text-sm font-mono font-semibold ${tempsRestant <= 60000 ? "text-red-600" : "text-[#1A2332]"}`}>
+              {formatTimer(tempsRestant)}
+            </span>
+          </div>
+        )}
+
         <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-[#1A2332] mb-2">
           Gestion des accès
         </h1>
@@ -292,17 +418,6 @@ export default function AdminsManager({ estOwner = false }: { estOwner?: boolean
                   onChange={(e) => setPoste(e.target.value)}
                 />
               </div>
-            </div>
-
-            <div>
-              <label className={labelClass}>Rôle</label>
-              <select className={inputClass} value={role} onChange={(e) => setRole(e.target.value)}>
-                <option value="editor">Éditeur (accès limité aux actions cochées)</option>
-                <option value="manager">Manager (accès étendu aux actions cochées)</option>
-              </select>
-              <p className="text-[11px] text-[#1A2332]/40 mt-2">
-                Le rôle d'administrateur principal (accès total) ne peut pas être attribué ici.
-              </p>
             </div>
 
             {/* Permissions granulaires */}
@@ -429,9 +544,6 @@ export default function AdminsManager({ estOwner = false }: { estOwner?: boolean
                       )}
 
                       <div className="flex flex-wrap gap-1.5 mt-2">
-                        <span className="text-[9px] tracking-[0.15em] uppercase text-[#B8985A] border border-[#B8985A]/40 px-2 py-0.5">
-                          {a.role === "manager" ? "Manager" : "Éditeur"}
-                        </span>
                         {modulesActifs.map((modId) => (
                           <span
                             key={modId}

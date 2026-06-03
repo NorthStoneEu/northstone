@@ -63,7 +63,28 @@ export default function Header() {
   const [hoveredMenu, setHoveredMenu] = useState<string | null>(null);
   const [openMobileAccordion, setOpenMobileAccordion] = useState<string | null>(null);
   const [isAccountMenuOpen, setIsAccountMenuOpen] = useState(false);
+  const [estAdmin, setEstAdmin] = useState(false);
+  const [estOwner, setEstOwner] = useState(false);
   const accountMenuRef = useRef<HTMLDivElement>(null);
+
+  // Vérifier si l'utilisateur connecté a un accès admin
+  useEffect(() => {
+    if (!isSignedIn) {
+      setEstAdmin(false);
+      setEstOwner(false);
+      return;
+    }
+    fetch("/api/admin/check", { credentials: "include" })
+      .then((r) => r.json())
+      .then((data) => {
+        setEstAdmin(!!data.estAdmin);
+        setEstOwner(!!data.estOwner);
+      })
+      .catch(() => {
+        setEstAdmin(false);
+        setEstOwner(false);
+      });
+  }, [isSignedIn]);
 
   // Bloquer le scroll body quand le menu mobile est ouvert
   useEffect(() => {
@@ -224,6 +245,41 @@ export default function Header() {
                       {user?.emailAddresses[0]?.emailAddress}
                     </p>
                   </div>
+
+                  {/* Raccourci ADMIN (si accès admin) */}
+                  {estAdmin && (
+                    <div className="border-b border-[#1A2332]/10">
+                      <Link
+                        href="/admin"
+                        onClick={() => setIsAccountMenuOpen(false)}
+                        className="flex items-center gap-3 px-5 py-3 text-xs tracking-[0.15em] uppercase text-[#B8985A] font-semibold hover:bg-[#B8985A]/10 transition-colors"
+                      >
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                          <path d="M12 2 4 5v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V5l-8-3z" />
+                        </svg>
+                        Espace admin
+                      </Link>
+                    </div>
+                  )}
+
+                  {/* Raccourci GESTION DES ACCÈS (owner uniquement) */}
+                  {estOwner && (
+                    <div className="border-b border-[#1A2332]/10">
+                      <Link
+                        href="/admin/administrateurs"
+                        onClick={() => setIsAccountMenuOpen(false)}
+                        className="flex items-center gap-3 px-5 py-3 text-xs tracking-[0.15em] uppercase text-[#B8985A] font-semibold hover:bg-[#B8985A]/10 transition-colors"
+                      >
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                          <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                          <circle cx="9" cy="7" r="4" />
+                          <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+                          <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                        </svg>
+                        Gestion des accès
+                      </Link>
+                    </div>
+                  )}
 
                   {/* Liens du menu */}
                   <nav className="py-2">
@@ -577,6 +633,42 @@ export default function Header() {
                   <p className="text-[10px] tracking-[0.3em] uppercase text-[#1A2332]/50 mt-8 mb-3">
                     Mon espace
                   </p>
+
+                  {/* Raccourci ADMIN mobile (si accès admin) */}
+                  {estAdmin && (
+                    <div className="border-b border-[#1A2332]/10">
+                      <Link
+                        href="/admin"
+                        className="flex items-center gap-3 py-3.5 text-sm font-semibold text-[#B8985A] hover:text-[#1A2332] transition-colors duration-300"
+                        onClick={() => setIsMenuOpen(false)}
+                      >
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                          <path d="M12 2 4 5v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V5l-8-3z" />
+                        </svg>
+                        Espace admin
+                      </Link>
+                    </div>
+                  )}
+
+                  {/* Raccourci GESTION DES ACCÈS mobile (owner uniquement) */}
+                  {estOwner && (
+                    <div className="border-b border-[#1A2332]/10">
+                      <Link
+                        href="/admin/administrateurs"
+                        className="flex items-center gap-3 py-3.5 text-sm font-semibold text-[#B8985A] hover:text-[#1A2332] transition-colors duration-300"
+                        onClick={() => setIsMenuOpen(false)}
+                      >
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                          <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                          <circle cx="9" cy="7" r="4" />
+                          <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+                          <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                        </svg>
+                        Gestion des accès
+                      </Link>
+                    </div>
+                  )}
+
                   <div className="border-b border-[#1A2332]/10">
                     <Link
                       href="/compte"
