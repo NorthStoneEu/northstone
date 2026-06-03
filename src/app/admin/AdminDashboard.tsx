@@ -3,13 +3,6 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 
-const sections = [
-  { titre: "Produits", desc: "Gérer la collection permanente", href: "/admin/produits", actif: true },
-  { titre: "Drops", desc: "Créer et gérer les drops", href: "/admin/drops", actif: false },
-  { titre: "Commandes", desc: "Suivre les commandes", href: "/admin/commandes", actif: false },
-  { titre: "Authentification", desc: "Pièces et puces NFC", href: "/admin/authentification", actif: false },
-];
-
 type Product = {
   id: number;
   gender: string;
@@ -17,9 +10,26 @@ type Product = {
   stock_by_size: Record<string, number>;
 };
 
-export default function AdminDashboard({ email }: { email: string }) {
+export default function AdminDashboard({
+  email,
+  peutGererAdmins = false,
+}: {
+  email: string;
+  peutGererAdmins?: boolean;
+}) {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Sections du back-office (la carte "Gestion des accès" n'apparaît que si autorisé)
+  const sections = [
+    { titre: "Produits", desc: "Gérer la collection permanente", href: "/admin/produits", actif: true },
+    { titre: "Drops", desc: "Créer et gérer les drops", href: "/admin/drops", actif: false },
+    { titre: "Commandes", desc: "Suivre les commandes", href: "/admin/commandes", actif: false },
+    { titre: "Authentification", desc: "Pièces et puces NFC", href: "/admin/authentification", actif: false },
+    ...(peutGererAdmins
+      ? [{ titre: "Gestion des accès", desc: "Collaborateurs et permissions", href: "/admin/administrateurs", actif: true }]
+      : []),
+  ];
 
   useEffect(() => {
     fetch("/api/admin/produits", { credentials: "include" })
