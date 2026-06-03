@@ -1,13 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
-import { currentUser } from "@clerk/nextjs/server";
+import { auth, clerkClient } from "@clerk/nextjs/server";
 import { isAdmin } from "@/lib/admin";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
-// Vérifie que l'appelant est bien un admin
+// Vérifie que l'appelant est bien un admin (via auth() = fiable et rapide)
 async function verifierAdmin() {
-  const user = await currentUser();
-  const email = user?.emailAddresses?.[0]?.emailAddress;
-  return isAdmin(email);
+  const { userId } = await auth();
+  if (!userId) return false;
+  try {
+    const client = await clerkClient();
+    const user = await client.users.getUser(userId);
+    const email = user.emailAddresses?.[0]?.emailAddress;
+    return await isAdmin(email);
+  } catch {
+    return false;
+  }
 }
 
 // GET : liste tous les produits (pour l'admin)

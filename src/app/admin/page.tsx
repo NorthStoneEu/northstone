@@ -12,7 +12,7 @@ export default async function AdminPage() {
   const email = user?.emailAddresses?.[0]?.emailAddress;
 
   // Protection : non connecté OU pas admin -> redirection accueil
-  if (!isAdmin(email)) {
+  if (!(await isAdmin(email))) {
     redirect("/");
   }
 

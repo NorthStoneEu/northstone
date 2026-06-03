@@ -11,6 +11,10 @@ type Product = {
   gender: string;
   price: number;
   is_new: boolean;
+  description?: string;
+  composition?: string;
+  care?: string;
+  delivery?: string;
   images_by_color: Record<string, string[]>;
   colors: string[];
   sizes: string[];
@@ -25,6 +29,8 @@ export default function ProduitsAdmin() {
   const [loading, setLoading] = useState(true);
   const [filtreGenre, setFiltreGenre] = useState<"tous" | "homme" | "femme">("tous");
   const [filtreCategorie, setFiltreCategorie] = useState<string>("Toutes");
+  const [recherche, setRecherche] = useState("");
+  const [tri, setTri] = useState("id");
   const [selection, setSelection] = useState<Set<number>>(new Set());
   const [suppressionEnCours, setSuppressionEnCours] = useState(false);
 
@@ -72,6 +78,53 @@ export default function ProduitsAdmin() {
     }
   };
 
+  // Duplique un produit (crée une copie modifiable)
+  const dupliquer = async (p: Product) => {
+    if (!confirm(`Dupliquer "${p.name}" ?`)) return;
+
+    let nouveauSlug = `${p.slug}-copie`;
+    let n = 2;
+    while (products.some((x) => x.slug === nouveauSlug)) {
+      nouveauSlug = `${p.slug}-copie-${n}`;
+      n++;
+    }
+
+    const copie = {
+      slug: nouveauSlug,
+      name: `${p.name} (copie)`,
+      category: p.category,
+      gender: p.gender,
+      price: p.price,
+      description: p.description || "",
+      composition: p.composition || "",
+      care: p.care || "",
+      delivery: p.delivery || "",
+      isNew: p.is_new || false,
+      colors: p.colors || [],
+      sizes: p.sizes || [],
+      imagesByColor: p.images_by_color || {},
+      stockBySize: p.stock_by_size || {},
+    };
+
+    const res = await fetch("/api/admin/produits", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify(copie),
+    });
+
+    if (res.ok) {
+      const data = await res.json();
+      if (data.product) {
+        setProducts((prev) => [...prev, data.product]);
+      } else {
+        chargerProduits();
+      }
+    } else {
+      alert("Erreur lors de la duplication.");
+    }
+  };
+
   const supprimerSelection = async () => {
     if (selection.size === 0) return;
     if (!confirm(`Supprimer ${selection.size} produit(s) ? Cette action est définitive.`)) return;
@@ -101,7 +154,37 @@ export default function ProduitsAdmin() {
   const produitsFiltres = products.filter((p) => {
     if (filtreGenre !== "tous" && p.gender !== filtreGenre) return false;
     if (filtreCategorie !== "Toutes" && p.category !== filtreCategorie) return false;
+    if (recherche.trim()) {
+      const q = recherche.trim().toLowerCase();
+      const dansNom = p.name.toLowerCase().includes(q);
+      const dansCategorie = p.category.toLowerCase().includes(q);
+      const dansSlug = p.slug.toLowerCase().includes(q);
+      if (!dansNom && !dansCategorie && !dansSlug) return false;
+    }
     return true;
+  });
+
+  // Stock total d'un produit (utilisé pour le tri par stock)
+  const stockDe = (p: Product) =>
+    Object.values(p.stock_by_size || {}).reduce((sum, q) => sum + (Number(q) || 0), 0);
+
+  const produitsTries = [...produitsFiltres].sort((a, b) => {
+    switch (tri) {
+      case "nom-az":
+        return a.name.localeCompare(b.name);
+      case "nom-za":
+        return b.name.localeCompare(a.name);
+      case "prix-croissant":
+        return a.price - b.price;
+      case "prix-decroissant":
+        return b.price - a.price;
+      case "stock-croissant":
+        return stockDe(a) - stockDe(b);
+      case "stock-decroissant":
+        return stockDe(b) - stockDe(a);
+      default:
+        return a.id - b.id;
+    }
   });
 
   const toggleSelection = (id: number) => {
@@ -114,7 +197,7 @@ export default function ProduitsAdmin() {
   };
 
   const toggleToutSelectionner = () => {
-    const idsAffichés = produitsFiltres.map((p) => p.id);
+    const idsAffichés = produitsTries.map((p) => p.id);
     const tousSélectionnés = idsAffichés.every((id) => selection.has(id));
     if (tousSélectionnés) {
       setSelection(new Set());
@@ -124,9 +207,9 @@ export default function ProduitsAdmin() {
   };
 
   const tousAffichésSelectionnes =
-    produitsFiltres.length > 0 && produitsFiltres.every((p) => selection.has(p.id));
+    produitsTries.length > 0 && produitsTries.every((p) => selection.has(p.id));
 
-  // Calcule le stock total d'un produit
+  // Calcule le stock total d'un produit (pour l'affichage)
   const stockTotal = (p: Product) =>
     Object.values(p.stock_by_size || {}).reduce((sum, q) => sum + (Number(q) || 0), 0);
 
@@ -153,7 +236,7 @@ export default function ProduitsAdmin() {
               Produits
             </h1>
             <p className="text-sm text-[#1A2332]/60 mt-1">
-              {loading ? "Chargement..." : `${produitsFiltres.length} produit(s)`}
+              {loading ? "Chargement..." : `${produitsTries.length} produit(s)`}
             </p>
           </div>
           <Link
@@ -162,6 +245,64 @@ export default function ProduitsAdmin() {
           >
             + Nouveau produit
           </Link>
+        </div>
+
+        {/* Barre de recherche */}
+        <div className="mb-4">
+          <div className="relative max-w-md">
+            <input
+              type="text"
+              value={recherche}
+              onChange={(e) => setRecherche(e.target.value)}
+              placeholder="Rechercher un produit (nom, catégorie...)"
+              className="w-full bg-white border border-[#1A2332]/20 px-4 py-2.5 pl-10 text-sm text-[#1A2332] placeholder:text-[#1A2332]/40 focus:outline-none focus:border-[#B8985A] transition-colors"
+            />
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-[#1A2332]/40"
+            >
+              <circle cx="11" cy="11" r="8" />
+              <line x1="21" y1="21" x2="16.65" y2="16.65" />
+            </svg>
+            {recherche && (
+              <button
+                onClick={() => setRecherche("")}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-[#1A2332]/40 hover:text-[#1A2332]"
+                style={{ background: "none", border: "none", cursor: "pointer" }}
+                aria-label="Effacer"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <line x1="6" y1="6" x2="18" y2="18" />
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                </svg>
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Tri */}
+        <div className="flex items-center gap-2 mb-4">
+          <label className="text-[10px] tracking-[0.2em] uppercase text-[#1A2332]/50 font-semibold">
+            Trier :
+          </label>
+          <select
+            value={tri}
+            onChange={(e) => setTri(e.target.value)}
+            className="bg-white border border-[#1A2332]/20 px-3 py-2 text-sm text-[#1A2332] focus:outline-none focus:border-[#B8985A] transition-colors"
+          >
+            <option value="id">Ordre d'ajout</option>
+            <option value="nom-az">Nom (A → Z)</option>
+            <option value="nom-za">Nom (Z → A)</option>
+            <option value="prix-croissant">Prix (croissant)</option>
+            <option value="prix-decroissant">Prix (décroissant)</option>
+            <option value="stock-croissant">Stock (faible → élevé)</option>
+            <option value="stock-decroissant">Stock (élevé → faible)</option>
+          </select>
         </div>
 
         {/* Filtre genre */}
@@ -211,7 +352,7 @@ export default function ProduitsAdmin() {
         )}
 
         {/* Barre de sélection */}
-        {produitsFiltres.length > 0 && (
+        {produitsTries.length > 0 && (
           <div className="flex items-center justify-between mb-3 px-4 py-2 bg-[#EFE9DC] border border-[#1A2332]/10">
             <label className="flex items-center gap-2 cursor-pointer text-[11px] tracking-[0.15em] uppercase text-[#1A2332] font-semibold">
               <input
@@ -236,11 +377,11 @@ export default function ProduitsAdmin() {
 
         {loading ? (
           <p className="text-center py-20 text-[#1A2332]/40 text-sm">Chargement des produits...</p>
-        ) : produitsFiltres.length === 0 ? (
+        ) : produitsTries.length === 0 ? (
           <p className="text-center py-20 text-[#1A2332]/40 text-sm">Aucun produit dans cette sélection.</p>
         ) : (
           <div className="bg-white border border-[#1A2332]/10 overflow-hidden">
-            {produitsFiltres.map((p, i) => {
+            {produitsTries.map((p, i) => {
               const firstImage = p.images_by_color?.[p.colors?.[0]]?.[0] || "";
               const estSelectionne = selection.has(p.id);
               const stock = stockTotal(p);
@@ -248,7 +389,7 @@ export default function ProduitsAdmin() {
                 <div
                   key={p.id}
                   className={`flex items-center gap-4 px-4 py-3 ${
-                    i !== produitsFiltres.length - 1 ? "border-b border-[#1A2332]/10" : ""
+                    i !== produitsTries.length - 1 ? "border-b border-[#1A2332]/10" : ""
                   } ${estSelectionne ? "bg-[#B8985A]/10" : ""}`}
                 >
                   <input
@@ -306,6 +447,13 @@ export default function ProduitsAdmin() {
                     >
                       Modifier
                     </Link>
+                    <button
+                      onClick={() => dupliquer(p)}
+                      className="px-3 py-1.5 text-[10px] tracking-[0.15em] uppercase text-[#1A2332] border border-[#1A2332]/20 hover:border-[#B8985A] hover:text-[#B8985A] transition-colors"
+                      style={{ background: "none", cursor: "pointer" }}
+                    >
+                      Dupliquer
+                    </button>
                     <button
                       onClick={() => supprimer(p.id, p.name)}
                       className="px-3 py-1.5 text-[10px] tracking-[0.15em] uppercase text-red-600 border border-red-200 hover:border-red-600 transition-colors"

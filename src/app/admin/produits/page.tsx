@@ -11,7 +11,7 @@ export default async function ProduitsPage() {
   const user = await currentUser();
   const email = user?.emailAddresses?.[0]?.emailAddress;
 
-  if (!isAdmin(email)) {
+  if (!(await isAdmin(email))) {
     redirect("/");
   }
 

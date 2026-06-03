@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Link from "next/link";
 
 const sections = [
@@ -9,7 +10,72 @@ const sections = [
   { titre: "Authentification", desc: "Pièces et puces NFC", href: "/admin/authentification", actif: false },
 ];
 
+type Product = {
+  id: number;
+  gender: string;
+  price: number;
+  stock_by_size: Record<string, number>;
+};
+
 export default function AdminDashboard({ email }: { email: string }) {
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch("/api/admin/produits", { credentials: "include" })
+      .then((r) => r.json())
+      .then((data) => {
+        setProducts(data.products || []);
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
+  }, []);
+
+  // Calculs des statistiques
+  const stockTotal = (p: Product) =>
+    Object.values(p.stock_by_size || {}).reduce((sum, q) => sum + (Number(q) || 0), 0);
+
+  const total = products.length;
+  const nbHomme = products.filter((p) => p.gender === "homme").length;
+  const nbFemme = products.filter((p) => p.gender === "femme").length;
+  const enRupture = products.filter((p) => stockTotal(p) === 0).length;
+  const stockFaible = products.filter((p) => {
+    const s = stockTotal(p);
+    return s > 0 && s <= 5;
+  }).length;
+  const valeurStock = products.reduce(
+    (sum, p) => sum + p.price * stockTotal(p),
+    0
+  );
+  const articlesTotal = products.reduce((sum, p) => sum + stockTotal(p), 0);
+
+  const stats = [
+    {
+      label: "Produits",
+      valeur: total,
+      detail: `${nbHomme} homme · ${nbFemme} femme`,
+      couleur: "text-[#1A2332]",
+    },
+    {
+      label: "En rupture",
+      valeur: enRupture,
+      detail: enRupture > 0 ? "à réapprovisionner" : "tout est en stock",
+      couleur: enRupture > 0 ? "text-red-600" : "text-green-600",
+    },
+    {
+      label: "Stock faible",
+      valeur: stockFaible,
+      detail: "5 articles ou moins",
+      couleur: stockFaible > 0 ? "text-[#B8985A]" : "text-[#1A2332]",
+    },
+    {
+      label: "Valeur du stock",
+      valeur: `${valeurStock.toLocaleString("fr-FR")} €`,
+      detail: `${articlesTotal} article(s) en stock`,
+      couleur: "text-[#1A2332]",
+    },
+  ];
+
   return (
     <div className="min-h-screen bg-[#F5F1EA]">
       {/* Barre admin */}
@@ -33,10 +99,31 @@ export default function AdminDashboard({ email }: { email: string }) {
         <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-[#1A2332] mb-2">
           Tableau de bord
         </h1>
-        <p className="text-sm text-[#1A2332]/60 mb-10">
+        <p className="text-sm text-[#1A2332]/60 mb-8">
           Gérez votre boutique Northstone.
         </p>
 
+        {/* Statistiques */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
+          {stats.map((stat) => (
+            <div key={stat.label} className="bg-white border border-[#1A2332]/10 p-5">
+              <p className="text-[10px] tracking-[0.25em] uppercase text-[#1A2332]/50 mb-2">
+                {stat.label}
+              </p>
+              <p className={`text-2xl sm:text-3xl font-black tracking-tight ${stat.couleur}`}>
+                {loading ? "—" : stat.valeur}
+              </p>
+              <p className="text-[11px] text-[#1A2332]/40 mt-1">
+                {loading ? "Chargement..." : stat.detail}
+              </p>
+            </div>
+          ))}
+        </div>
+
+        {/* Sections */}
+        <h2 className="text-[11px] tracking-[0.3em] uppercase text-[#1A2332]/50 font-semibold mb-4">
+          Gestion
+        </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
           {sections.map((s) => (
             s.actif ? (
