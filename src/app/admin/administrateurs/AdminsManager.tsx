@@ -25,7 +25,7 @@ export default function AdminsManager({ estOwner = false }: { estOwner?: boolean
   const [saving, setSaving] = useState(false);
 
   // ── Verrou 2FA (owner uniquement) ──
-  const [deverrouille, setDeverrouille] = useState(!estOwner); // non-owner = pas de verrou (lecture seule)
+  const [deverrouille, setDeverrouille] = useState(!estOwner);
   const [codeVerrou, setCodeVerrou] = useState("");
   const [modeSecours, setModeSecours] = useState(false);
   const [erreurVerrou, setErreurVerrou] = useState("");
@@ -95,16 +95,16 @@ export default function AdminsManager({ estOwner = false }: { estOwner?: boolean
     charger();
   }, []);
 
-  // ── Gestion des cases ──
-
-  const aAction = (moduleId: string, actionId: string) =>
-    (permissions[moduleId] || []).includes(actionId);
-
+  // ── État du formulaire ──
   const [email, setEmail] = useState("");
   const [prenom, setPrenom] = useState("");
   const [nomFamille, setNomFamille] = useState("");
   const [poste, setPoste] = useState("");
   const [permissions, setPermissions] = useState<Permissions>({});
+
+  // ── Gestion des cases ──
+  const aAction = (moduleId: string, actionId: string) =>
+    (permissions[moduleId] || []).includes(actionId);
 
   const toggleAction = (moduleId: string, actionId: string) => {
     setPermissions((prev) => {
@@ -226,6 +226,22 @@ export default function AdminsManager({ estOwner = false }: { estOwner?: boolean
     });
     if (res.ok) {
       charger();
+    } else {
+      const data = await res.json();
+      alert("Erreur : " + (data.error || "inconnue"));
+    }
+  };
+
+  const reinitialiser2fa = async (a: Admin) => {
+    if (!confirm(`Réinitialiser la 2FA de "${a.email}" ?\n\nLa personne devra reconfigurer son application d'authentification à sa prochaine connexion. À faire uniquement si elle a perdu l'accès à son téléphone.`)) return;
+    const res = await fetch("/api/admin/2fa/reset", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({ email: a.email }),
+    });
+    if (res.ok) {
+      alert(`La 2FA de ${a.email} a été réinitialisée. La personne reconfigurera à sa prochaine connexion.`);
     } else {
       const data = await res.json();
       alert("Erreur : " + (data.error || "inconnue"));
@@ -591,6 +607,14 @@ export default function AdminsManager({ estOwner = false }: { estOwner?: boolean
                           style={{ background: "none", cursor: "pointer" }}
                         >
                           Retirer
+                        </button>
+                        <button
+                          onClick={() => reinitialiser2fa(a)}
+                          className="px-3 py-1.5 text-[10px] tracking-[0.15em] uppercase text-[#1A2332]/60 border border-[#1A2332]/20 hover:border-[#B8985A] hover:text-[#B8985A] transition-colors"
+                          title="Réinitialiser la 2FA (si perte du téléphone)"
+                          style={{ background: "none", cursor: "pointer" }}
+                        >
+                          Reset 2FA
                         </button>
                       </div>
                     )}
