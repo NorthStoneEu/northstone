@@ -24,6 +24,7 @@ export default function DropsManager() {
   const [drops, setDrops] = useState<Drop[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [edition, setEdition] = useState<Drop | null>(null);
 
   const charger = () => {
@@ -41,7 +42,6 @@ export default function DropsManager() {
     charger();
   }, []);
 
-  // Convertit une date ISO en valeur pour input datetime-local
   const isoVersInput = (iso: string | null) => {
     if (!iso) return "";
     try {
@@ -87,6 +87,35 @@ export default function DropsManager() {
 
   const retirerLot = (index: number) => {
     setEdition((prev) => (prev ? { ...prev, lots: prev.lots.filter((_, i) => i !== index) } : prev));
+  };
+
+  // Upload d'image vers Supabase (même mécanique que les produits)
+  const uploaderImage = async (file: File) => {
+    setUploading(true);
+    try {
+      const { supabase } = await import("@/lib/supabase");
+      const ext = file.name.split(".").pop() || "jpg";
+      const fileName = `drop-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+
+      const { error } = await supabase.storage
+        .from("product-images")
+        .upload(fileName, file, { contentType: file.type, upsert: false });
+
+      if (error) {
+        alert("Erreur upload : " + error.message);
+        setUploading(false);
+        return;
+      }
+
+      const { data: urlData } = supabase.storage
+        .from("product-images")
+        .getPublicUrl(fileName);
+
+      set("image_url", urlData.publicUrl);
+    } catch (e: any) {
+      alert("Erreur : " + (e.message || "inconnue"));
+    }
+    setUploading(false);
   };
 
   const enregistrer = async () => {
@@ -234,9 +263,39 @@ export default function DropsManager() {
               </div>
             </div>
 
+            {/* Image avec upload */}
             <div>
-              <label className={labelClass}>Image (chemin ou URL)</label>
-              <input className={inputClass} placeholder="Ex : /drop-01.jpg" value={edition.image_url} onChange={(e) => set("image_url", e.target.value)} />
+              <label className={labelClass}>Image du drop</label>
+              <div className="flex items-start gap-4">
+                {edition.image_url ? (
+                  <div className="relative w-28 h-36 bg-[#EFE9DC] bg-cover bg-center flex-shrink-0 border border-[#1A2332]/10" style={{ backgroundImage: `url('${edition.image_url}')` }}>
+                    <button
+                      onClick={() => set("image_url", "")}
+                      className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-red-600 text-white text-sm flex items-center justify-center"
+                      style={{ cursor: "pointer" }}
+                      title="Retirer l'image"
+                    >
+                      ×
+                    </button>
+                  </div>
+                ) : (
+                  <div className="w-28 h-36 bg-[#EFE9DC] flex-shrink-0 border border-dashed border-[#1A2332]/20 flex items-center justify-center text-[10px] text-[#1A2332]/40 text-center px-2">
+                    Aucune image
+                  </div>
+                )}
+                <div className="flex-1">
+                  <label className="inline-block text-[10px] tracking-[0.15em] uppercase text-[#1A2332] border border-[#1A2332]/20 px-4 py-2.5 cursor-pointer hover:border-[#1A2332] transition-colors">
+                    {uploading ? "Envoi..." : edition.image_url ? "Changer l'image" : "Choisir une image"}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => { const f = e.target.files?.[0]; if (f) uploaderImage(f); e.target.value = ""; }}
+                    />
+                  </label>
+                  <p className="text-[11px] text-[#1A2332]/45 mt-2">Format vertical recommandé (la pièce du drop).</p>
+                </div>
+              </div>
             </div>
 
             {/* Lots */}
@@ -274,9 +333,9 @@ export default function DropsManager() {
             <div className="flex gap-3 pt-2 border-t border-[#1A2332]/10">
               <button
                 onClick={enregistrer}
-                disabled={saving}
+                disabled={saving || uploading}
                 className="bg-black text-[#B8985A] border border-black px-6 py-3 text-[11px] tracking-[0.2em] uppercase font-semibold hover:bg-[#1F1F1F] transition-all disabled:opacity-40"
-                style={{ cursor: saving ? "not-allowed" : "pointer" }}
+                style={{ cursor: saving || uploading ? "not-allowed" : "pointer" }}
               >
                 {saving ? "Enregistrement..." : edition.id ? "Enregistrer les modifications" : "Créer le drop"}
               </button>
@@ -296,17 +355,22 @@ export default function DropsManager() {
                 {drops.map((d) => (
                   <div key={d.id} className="bg-white border border-[#1A2332]/10 p-5">
                     <div className="flex items-start justify-between gap-4">
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap mb-1">
-                          <p className="text-sm font-semibold text-[#1A2332]">{d.name}</p>
-                          {d.is_active && <span className="text-[9px] tracking-[0.15em] uppercase bg-green-50 text-green-700 px-2 py-0.5">Actif</span>}
-                          {d.visible_accueil && <span className="text-[9px] tracking-[0.15em] uppercase bg-[#B8985A]/10 text-[#8a6d35] px-2 py-0.5">Sur l'accueil</span>}
-                          {!d.is_active && <span className="text-[9px] tracking-[0.15em] uppercase bg-[#EFE9DC] text-[#1A2332]/60 px-2 py-0.5">Inactif</span>}
+                      <div className="flex items-start gap-4 min-w-0">
+                        {d.image_url && (
+                          <div className="w-14 h-18 bg-[#EFE9DC] bg-cover bg-center flex-shrink-0 border border-[#1A2332]/10" style={{ backgroundImage: `url('${d.image_url}')`, height: "72px" }} />
+                        )}
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap mb-1">
+                            <p className="text-sm font-semibold text-[#1A2332]">{d.name}</p>
+                            {d.is_active && <span className="text-[9px] tracking-[0.15em] uppercase bg-green-50 text-green-700 px-2 py-0.5">Actif</span>}
+                            {d.visible_accueil && <span className="text-[9px] tracking-[0.15em] uppercase bg-[#B8985A]/10 text-[#8a6d35] px-2 py-0.5">Sur l'accueil</span>}
+                            {!d.is_active && <span className="text-[9px] tracking-[0.15em] uppercase bg-[#EFE9DC] text-[#1A2332]/60 px-2 py-0.5">Inactif</span>}
+                          </div>
+                          {d.sous_titre && <p className="text-xs text-[#1A2332]/50">{d.sous_titre}</p>}
+                          <p className="text-[11px] text-[#1A2332]/45 mt-1.5">
+                            {d.total_pieces} pièces · {d.total_winners} gagnants · Ouverture : {formatDate(d.release_date)}
+                          </p>
                         </div>
-                        {d.sous_titre && <p className="text-xs text-[#1A2332]/50">{d.sous_titre}</p>}
-                        <p className="text-[11px] text-[#1A2332]/45 mt-1.5">
-                          {d.total_pieces} pièces · {d.total_winners} gagnants · Ouverture : {formatDate(d.release_date)}
-                        </p>
                       </div>
                       <div className="flex gap-2 flex-shrink-0">
                         <button
