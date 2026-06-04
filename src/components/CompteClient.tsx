@@ -1,10 +1,33 @@
 "use client";
 
-import { UserProfile } from "@clerk/nextjs";
+import { UserProfile, useUser } from "@clerk/nextjs";
 import MesInformations from "./profil/MesInformations";
 import MesAdresses from "./profil/MesAdresses";
 
 export default function CompteClient() {
+  const { isLoaded, isSignedIn } = useUser();
+
+  // Clerk n'a pas encore fini de charger → on attend (évite l'erreur "user missing")
+  if (!isLoaded) {
+    return (
+      <div className="flex justify-center py-20">
+        <p className="text-sm text-[#1A2332]/40">Chargement de votre compte...</p>
+      </div>
+    );
+  }
+
+  // Chargé mais personne connecté → message (au lieu de planter)
+  if (!isSignedIn) {
+    return (
+      <div className="flex justify-center py-20">
+        <p className="text-sm text-[#1A2332]/60">
+          Vous devez être connecté pour accéder à votre compte.
+        </p>
+      </div>
+    );
+  }
+
+  // Chargé ET connecté → on affiche le profil en toute sécurité
   return (
     <div className="flex justify-center">
       <UserProfile
