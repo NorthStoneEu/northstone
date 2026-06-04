@@ -42,24 +42,18 @@ const empty: FormProduct = {
 const categoriesHomme = ["Polos", "T-shirts", "Chemises", "Sweats", "Pulls", "Pantalons", "Vestes"];
 const categoriesFemme = ["Robes", "T-shirts", "Chemisiers", "Pulls", "Pantalons", "Vestes", "Accessoires"];
 
-// Ordre standard des tailles lettres
 const ordreTailles = ["XS", "S", "M", "L", "XL", "XXL", "XXXL"];
 
-// Trie une liste de tailles dans l'ordre logique (lettres puis chiffres puis le reste)
 function trierTailles(tailles: string[]): string[] {
   return [...tailles].sort((a, b) => {
     const ia = ordreTailles.indexOf(a.toUpperCase());
     const ib = ordreTailles.indexOf(b.toUpperCase());
-    // Les deux sont des tailles lettres connues
     if (ia !== -1 && ib !== -1) return ia - ib;
-    // Une seule est une taille lettre connue → elle passe avant
     if (ia !== -1) return -1;
     if (ib !== -1) return 1;
-    // Les deux sont des nombres → tri numérique
     const na = Number(a);
     const nb = Number(b);
     if (!isNaN(na) && !isNaN(nb)) return na - nb;
-    // Sinon ordre alphabétique
     return a.localeCompare(b);
   });
 }
@@ -113,7 +107,6 @@ export default function ProduitForm({ initial }: { initial?: FormProduct }) {
     });
   };
 
-  // Ajoute une taille puis re-trie automatiquement
   const ajouterTaille = () => {
     const s = newSize.trim();
     if (!s || p.sizes.includes(s)) return;
@@ -144,7 +137,6 @@ export default function ProduitForm({ initial }: { initial?: FormProduct }) {
     }));
   };
 
-  // Réordonne manuellement (glisser-déposer)
   const deplacerTaille = (from: number, to: number) => {
     if (from === to) return;
     setP((prev) => {
@@ -155,7 +147,6 @@ export default function ProduitForm({ initial }: { initial?: FormProduct }) {
     });
   };
 
-  // Remet l'ordre automatique
   const retrierAuto = () => {
     setP((prev) => ({ ...prev, sizes: trierTailles(prev.sizes) }));
   };
@@ -229,6 +220,8 @@ export default function ProduitForm({ initial }: { initial?: FormProduct }) {
   const inputClass =
     "w-full bg-transparent border border-[#1A2332]/20 px-3 py-2 text-sm text-[#1A2332] focus:outline-none focus:border-[#B8985A] transition-colors";
   const labelClass = "block text-[10px] tracking-[0.25em] uppercase text-[#1A2332]/50 mb-2";
+  const sectionClass = "bg-white border border-[#1A2332]/10 border-t-2 border-t-[#B8985A] p-6 sm:p-8";
+  const sectionTitre = "text-[11px] tracking-[0.3em] uppercase text-[#1A2332]/50 font-semibold mb-5";
 
   const stockTotal = p.sizes.reduce((sum, s) => sum + (p.stockBySize[s] || 0), 0);
 
@@ -249,97 +242,112 @@ export default function ProduitForm({ initial }: { initial?: FormProduct }) {
       </header>
 
       <main className="max-w-3xl mx-auto px-6 py-10">
-        <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-[#1A2332] mb-8">
-          {isEdit ? "Modifier le produit" : "Nouveau produit"}
-        </h1>
+        <div className="mb-8">
+          <p className="text-[11px] tracking-[0.3em] uppercase text-[#1A2332]/40 mb-2">
+            {isEdit ? "Édition" : "Création"}
+          </p>
+          <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-[#1A2332]">
+            {isEdit ? "Modifier le produit" : "Nouveau produit"}
+          </h1>
+        </div>
 
-        <div className="bg-white border border-[#1A2332]/10 p-6 sm:p-8 space-y-6">
-          {/* Genre */}
-          <div>
-            <label className={labelClass}>Genre</label>
-            <div className="flex gap-2">
-              {(["homme", "femme"] as const).map((g) => (
-                <button
-                  key={g}
-                  onClick={() => set("gender", g)}
-                  className={`px-4 py-2 text-[11px] tracking-[0.2em] uppercase font-semibold border transition-all ${
-                    p.gender === g
-                      ? "bg-[#1A2332] text-white border-[#1A2332]"
-                      : "bg-transparent text-[#1A2332]/60 border-[#1A2332]/20"
-                  }`}
-                >
-                  {g}
-                </button>
-              ))}
+        <div className="space-y-5">
+
+          {/* SECTION : Informations */}
+          <div className={sectionClass}>
+            <h2 className={sectionTitre}>Informations</h2>
+            <div className="space-y-6">
+              {/* Genre */}
+              <div>
+                <label className={labelClass}>Genre</label>
+                <div className="flex gap-2">
+                  {(["homme", "femme"] as const).map((g) => (
+                    <button
+                      key={g}
+                      onClick={() => set("gender", g)}
+                      className={`px-4 py-2 text-[11px] tracking-[0.2em] uppercase font-semibold border transition-all ${
+                        p.gender === g
+                          ? "bg-[#1A2332] text-white border-[#1A2332]"
+                          : "bg-transparent text-[#1A2332]/60 border-[#1A2332]/20"
+                      }`}
+                    >
+                      {g}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Nom */}
+              <div>
+                <label className={labelClass}>Nom du produit</label>
+                <input className={inputClass} value={p.name} onChange={(e) => set("name", e.target.value)} onBlur={() => { if (!p.slug) genererSlug(); }} />
+              </div>
+
+              {/* Slug */}
+              <div>
+                <label className={labelClass}>Slug (URL) — généré automatiquement</label>
+                <div className="flex gap-2">
+                  <input className={inputClass} value={p.slug} onChange={(e) => set("slug", e.target.value)} />
+                  <button onClick={genererSlug} className="px-3 py-2 text-[10px] tracking-[0.15em] uppercase text-[#1A2332] border border-[#1A2332]/20 hover:border-[#1A2332] whitespace-nowrap" style={{ cursor: "pointer" }}>
+                    Auto
+                  </button>
+                </div>
+              </div>
+
+              {/* Catégorie + Prix */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className={labelClass}>Catégorie</label>
+                  <select className={inputClass} value={p.category} onChange={(e) => set("category", e.target.value)}>
+                    <option value="">— Choisir —</option>
+                    {categories.map((c) => (
+                      <option key={c} value={c}>{c}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className={labelClass}>Prix (€)</label>
+                  <input type="number" className={inputClass} value={p.price} onChange={(e) => set("price", Number(e.target.value))} />
+                </div>
+              </div>
+
+              {/* Nouveau ? */}
+              <div>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" checked={p.isNew} onChange={(e) => set("isNew", e.target.checked)} />
+                  <span className="text-sm text-[#1A2332]">Marquer comme "Nouveau"</span>
+                </label>
+              </div>
             </div>
           </div>
 
-          {/* Nom */}
-          <div>
-            <label className={labelClass}>Nom du produit</label>
-            <input className={inputClass} value={p.name} onChange={(e) => set("name", e.target.value)} onBlur={() => { if (!p.slug) genererSlug(); }} />
-          </div>
-
-          {/* Slug */}
-          <div>
-            <label className={labelClass}>Slug (URL) — généré automatiquement</label>
-            <div className="flex gap-2">
-              <input className={inputClass} value={p.slug} onChange={(e) => set("slug", e.target.value)} />
-              <button onClick={genererSlug} className="px-3 py-2 text-[10px] tracking-[0.15em] uppercase text-[#1A2332] border border-[#1A2332]/20 hover:border-[#1A2332] whitespace-nowrap" style={{ cursor: "pointer" }}>
-                Auto
-              </button>
+          {/* SECTION : Détails */}
+          <div className={sectionClass}>
+            <h2 className={sectionTitre}>Détails</h2>
+            <div className="space-y-6">
+              <div>
+                <label className={labelClass}>Description</label>
+                <textarea className={inputClass} rows={3} value={p.description} onChange={(e) => set("description", e.target.value)} />
+              </div>
+              <div>
+                <label className={labelClass}>Composition & Origine</label>
+                <textarea className={inputClass} rows={2} value={p.composition} onChange={(e) => set("composition", e.target.value)} />
+              </div>
+              <div>
+                <label className={labelClass}>Entretien</label>
+                <textarea className={inputClass} rows={2} value={p.care} onChange={(e) => set("care", e.target.value)} />
+              </div>
+              <div>
+                <label className={labelClass}>Livraison & Retours</label>
+                <textarea className={inputClass} rows={2} value={p.delivery} onChange={(e) => set("delivery", e.target.value)} />
+              </div>
             </div>
           </div>
 
-          {/* Catégorie + Prix */}
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className={labelClass}>Catégorie</label>
-              <select className={inputClass} value={p.category} onChange={(e) => set("category", e.target.value)}>
-                <option value="">— Choisir —</option>
-                {categories.map((c) => (
-                  <option key={c} value={c}>{c}</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className={labelClass}>Prix (€)</label>
-              <input type="number" className={inputClass} value={p.price} onChange={(e) => set("price", Number(e.target.value))} />
-            </div>
-          </div>
-
-          {/* Nouveau ? */}
-          <div>
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input type="checkbox" checked={p.isNew} onChange={(e) => set("isNew", e.target.checked)} />
-              <span className="text-sm text-[#1A2332]">Marquer comme "Nouveau"</span>
-            </label>
-          </div>
-
-          {/* Description */}
-          <div>
-            <label className={labelClass}>Description</label>
-            <textarea className={inputClass} rows={3} value={p.description} onChange={(e) => set("description", e.target.value)} />
-          </div>
-
-          {/* Composition / Entretien / Livraison */}
-          <div>
-            <label className={labelClass}>Composition & Origine</label>
-            <textarea className={inputClass} rows={2} value={p.composition} onChange={(e) => set("composition", e.target.value)} />
-          </div>
-          <div>
-            <label className={labelClass}>Entretien</label>
-            <textarea className={inputClass} rows={2} value={p.care} onChange={(e) => set("care", e.target.value)} />
-          </div>
-          <div>
-            <label className={labelClass}>Livraison & Retours</label>
-            <textarea className={inputClass} rows={2} value={p.delivery} onChange={(e) => set("delivery", e.target.value)} />
-          </div>
-
-          {/* Tailles + STOCK avec glisser-déposer */}
-          <div>
+          {/* SECTION : Tailles & Stock */}
+          <div className={sectionClass}>
             <div className="flex items-center justify-between mb-2">
-              <label className={labelClass} style={{ marginBottom: 0 }}>Tailles & Stock</label>
+              <h2 className={sectionTitre} style={{ marginBottom: 0 }}>Tailles & Stock</h2>
               {p.sizes.length > 1 && (
                 <button
                   onClick={retrierAuto}
@@ -350,7 +358,7 @@ export default function ProduitForm({ initial }: { initial?: FormProduct }) {
                 </button>
               )}
             </div>
-            <p className="text-xs text-[#1A2332]/50 mb-3">
+            <p className="text-xs text-[#1A2332]/50 mb-4">
               Glisse une taille pour la réordonner. Une taille à 0 sera affichée comme épuisée.
             </p>
 
@@ -372,7 +380,6 @@ export default function ProduitForm({ initial }: { initial?: FormProduct }) {
                     }`}
                     style={{ cursor: "grab" }}
                   >
-                    {/* Poignée de glissement */}
                     <span className="text-[#1A2332]/30 select-none" title="Glisser pour réordonner">
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
                         <circle cx="9" cy="6" r="1.5" /><circle cx="15" cy="6" r="1.5" />
@@ -418,9 +425,9 @@ export default function ProduitForm({ initial }: { initial?: FormProduct }) {
             </div>
           </div>
 
-          {/* Couleurs + images */}
-          <div>
-            <label className={labelClass}>Couleurs & Photos</label>
+          {/* SECTION : Couleurs & Photos */}
+          <div className={sectionClass}>
+            <h2 className={sectionTitre}>Couleurs & Photos</h2>
             <div className="flex gap-2 mb-4">
               <input className={inputClass} placeholder="ex: Noir, Blanc, Beige..." value={newColor} onChange={(e) => setNewColor(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); ajouterCouleur(); } }} />
               <button onClick={ajouterCouleur} className="px-4 py-2 text-[10px] tracking-[0.15em] uppercase bg-[#1A2332] text-white whitespace-nowrap" style={{ cursor: "pointer" }}>Ajouter couleur</button>
@@ -452,11 +459,10 @@ export default function ProduitForm({ initial }: { initial?: FormProduct }) {
           </div>
 
           {/* Enregistrer */}
-          <div className="pt-4 border-t border-[#1A2332]/10">
-            <button onClick={enregistrer} disabled={saving} className="w-full bg-black text-[#B8985A] border border-black py-4 text-[11px] tracking-[0.3em] uppercase font-semibold hover:bg-[#1F1F1F] transition-all disabled:opacity-40" style={{ cursor: saving ? "not-allowed" : "pointer" }}>
-              {saving ? "Enregistrement..." : isEdit ? "Enregistrer les modifications" : "Créer le produit"}
-            </button>
-          </div>
+          <button onClick={enregistrer} disabled={saving} className="w-full bg-black text-[#B8985A] border border-black py-4 text-[11px] tracking-[0.3em] uppercase font-semibold hover:bg-[#1F1F1F] transition-all disabled:opacity-40" style={{ cursor: saving ? "not-allowed" : "pointer" }}>
+            {saving ? "Enregistrement..." : isEdit ? "Enregistrer les modifications" : "Créer le produit"}
+          </button>
+
         </div>
       </main>
     </div>

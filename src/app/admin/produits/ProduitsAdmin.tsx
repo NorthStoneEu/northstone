@@ -78,7 +78,6 @@ export default function ProduitsAdmin() {
     }
   };
 
-  // Duplique un produit (crée une copie modifiable)
   const dupliquer = async (p: Product) => {
     if (!confirm(`Dupliquer "${p.name}" ?`)) return;
 
@@ -164,7 +163,6 @@ export default function ProduitsAdmin() {
     return true;
   });
 
-  // Stock total d'un produit (utilisé pour le tri par stock)
   const stockDe = (p: Product) =>
     Object.values(p.stock_by_size || {}).reduce((sum, q) => sum + (Number(q) || 0), 0);
 
@@ -209,7 +207,6 @@ export default function ProduitsAdmin() {
   const tousAffichésSelectionnes =
     produitsTries.length > 0 && produitsTries.every((p) => selection.has(p.id));
 
-  // Calcule le stock total d'un produit (pour l'affichage)
   const stockTotal = (p: Product) =>
     Object.values(p.stock_by_size || {}).reduce((sum, q) => sum + (Number(q) || 0), 0);
 
@@ -230,13 +227,14 @@ export default function ProduitsAdmin() {
       </header>
 
       <main className="max-w-6xl mx-auto px-6 py-10">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
+        <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-8">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-[#1A2332]">
+            <p className="text-[11px] tracking-[0.3em] uppercase text-[#1A2332]/40 mb-2">Collection</p>
+            <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-[#1A2332]">
               Produits
             </h1>
-            <p className="text-sm text-[#1A2332]/60 mt-1">
-              {loading ? "Chargement..." : `${produitsTries.length} produit(s)`}
+            <p className="text-sm text-[#1A2332]/55 mt-2">
+              {loading ? "Chargement..." : `${produitsTries.length} pièce(s)`}
             </p>
           </div>
           <Link
@@ -255,15 +253,10 @@ export default function ProduitsAdmin() {
               value={recherche}
               onChange={(e) => setRecherche(e.target.value)}
               placeholder="Rechercher un produit (nom, catégorie...)"
-              className="w-full bg-white border border-[#1A2332]/20 px-4 py-2.5 pl-10 text-sm text-[#1A2332] placeholder:text-[#1A2332]/40 focus:outline-none focus:border-[#B8985A] transition-colors"
+              className="w-full bg-white border border-[#1A2332]/15 px-4 py-2.5 pl-10 text-sm text-[#1A2332] placeholder:text-[#1A2332]/40 focus:outline-none focus:border-[#B8985A] transition-colors"
             />
             <svg
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
+              width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
               className="absolute left-3 top-1/2 -translate-y-1/2 text-[#1A2332]/40"
             >
               <circle cx="11" cy="11" r="8" />
@@ -285,41 +278,42 @@ export default function ProduitsAdmin() {
           </div>
         </div>
 
-        {/* Tri */}
-        <div className="flex items-center gap-2 mb-4">
-          <label className="text-[10px] tracking-[0.2em] uppercase text-[#1A2332]/50 font-semibold">
-            Trier :
-          </label>
-          <select
-            value={tri}
-            onChange={(e) => setTri(e.target.value)}
-            className="bg-white border border-[#1A2332]/20 px-3 py-2 text-sm text-[#1A2332] focus:outline-none focus:border-[#B8985A] transition-colors"
-          >
-            <option value="id">Ordre d'ajout</option>
-            <option value="nom-az">Nom (A → Z)</option>
-            <option value="nom-za">Nom (Z → A)</option>
-            <option value="prix-croissant">Prix (croissant)</option>
-            <option value="prix-decroissant">Prix (décroissant)</option>
-            <option value="stock-croissant">Stock (faible → élevé)</option>
-            <option value="stock-decroissant">Stock (élevé → faible)</option>
-          </select>
-        </div>
-
-        {/* Filtre genre */}
-        <div className="flex gap-2 mb-4">
-          {(["tous", "homme", "femme"] as const).map((g) => (
-            <button
-              key={g}
-              onClick={() => changerGenre(g)}
-              className={`px-4 py-2 text-[11px] tracking-[0.2em] uppercase font-semibold transition-all border ${
-                filtreGenre === g
-                  ? "bg-[#1A2332] text-white border-[#1A2332]"
-                  : "bg-transparent text-[#1A2332]/60 border-[#1A2332]/20 hover:border-[#1A2332]"
-              }`}
+        {/* Tri + filtre genre sur une ligne */}
+        <div className="flex flex-wrap items-center gap-4 mb-4">
+          <div className="flex items-center gap-2">
+            <label className="text-[10px] tracking-[0.2em] uppercase text-[#1A2332]/50 font-semibold">
+              Trier :
+            </label>
+            <select
+              value={tri}
+              onChange={(e) => setTri(e.target.value)}
+              className="bg-white border border-[#1A2332]/15 px-3 py-2 text-sm text-[#1A2332] focus:outline-none focus:border-[#B8985A] transition-colors"
             >
-              {g}
-            </button>
-          ))}
+              <option value="id">Ordre d'ajout</option>
+              <option value="nom-az">Nom (A → Z)</option>
+              <option value="nom-za">Nom (Z → A)</option>
+              <option value="prix-croissant">Prix (croissant)</option>
+              <option value="prix-decroissant">Prix (décroissant)</option>
+              <option value="stock-croissant">Stock (faible → élevé)</option>
+              <option value="stock-decroissant">Stock (élevé → faible)</option>
+            </select>
+          </div>
+
+          <div className="flex border border-[#1A2332]/15">
+            {(["tous", "homme", "femme"] as const).map((g) => (
+              <button
+                key={g}
+                onClick={() => changerGenre(g)}
+                className={`px-4 py-2 text-[11px] tracking-[0.2em] uppercase font-semibold transition-all ${
+                  filtreGenre === g
+                    ? "bg-[#1A2332] text-white"
+                    : "bg-transparent text-[#1A2332]/55 hover:text-[#1A2332]"
+                }`}
+              >
+                {g}
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* Filtre catégorie */}
@@ -353,7 +347,7 @@ export default function ProduitsAdmin() {
 
         {/* Barre de sélection */}
         {produitsTries.length > 0 && (
-          <div className="flex items-center justify-between mb-3 px-4 py-2 bg-[#EFE9DC] border border-[#1A2332]/10">
+          <div className="flex items-center justify-between mb-3 px-4 py-2.5 bg-[#EFE9DC] border border-[#1A2332]/10">
             <label className="flex items-center gap-2 cursor-pointer text-[11px] tracking-[0.15em] uppercase text-[#1A2332] font-semibold">
               <input
                 type="checkbox"
@@ -380,17 +374,17 @@ export default function ProduitsAdmin() {
         ) : produitsTries.length === 0 ? (
           <p className="text-center py-20 text-[#1A2332]/40 text-sm">Aucun produit dans cette sélection.</p>
         ) : (
-          <div className="bg-white border border-[#1A2332]/10 overflow-hidden">
-            {produitsTries.map((p, i) => {
+          <div className="flex flex-col gap-2.5">
+            {produitsTries.map((p) => {
               const firstImage = p.images_by_color?.[p.colors?.[0]]?.[0] || "";
               const estSelectionne = selection.has(p.id);
               const stock = stockTotal(p);
               return (
                 <div
                   key={p.id}
-                  className={`flex items-center gap-4 px-4 py-3 ${
-                    i !== produitsTries.length - 1 ? "border-b border-[#1A2332]/10" : ""
-                  } ${estSelectionne ? "bg-[#B8985A]/10" : ""}`}
+                  className={`flex items-center gap-4 px-4 py-3.5 bg-white border transition-colors ${
+                    estSelectionne ? "border-[#B8985A] bg-[#B8985A]/[0.04]" : "border-[#1A2332]/10 hover:border-[#1A2332]/25"
+                  }`}
                 >
                   <input
                     type="checkbox"
@@ -400,45 +394,59 @@ export default function ProduitsAdmin() {
                     style={{ cursor: "pointer" }}
                   />
                   <div
-                    className="w-12 h-16 bg-[#EFE9DC] bg-cover bg-center flex-shrink-0"
+                    className="w-14 h-14 bg-[#EFE9DC] bg-cover bg-center flex-shrink-0 flex items-center justify-center"
                     style={firstImage ? { backgroundImage: `url('${firstImage}')` } : {}}
-                  />
+                  >
+                    {!firstImage && (
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1A2332" strokeWidth="1.5" className="opacity-20">
+                        <rect x="3" y="3" width="18" height="18" rx="2" />
+                        <circle cx="8.5" cy="8.5" r="1.5" />
+                        <path d="M21 15l-5-5L5 21" />
+                      </svg>
+                    )}
+                  </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-[#1A2332] truncate">{p.name}</p>
-                    <p className="text-xs text-[#1A2332]/50">
-                      {p.category} · {p.gender} · {p.price}€ {p.is_new && "· Nouveau"}
-                    </p>
-                    {/* Stock détaillé par taille */}
-                    <div className="mt-1.5">
-                      {stock === 0 ? (
-                        <span className="inline-block px-2 py-0.5 text-[10px] tracking-[0.1em] uppercase font-semibold bg-red-100 text-red-700">
+                    <div className="flex items-center gap-2.5 flex-wrap">
+                      <p className="text-sm font-semibold text-[#1A2332] truncate">{p.name}</p>
+                      {stock === 0 && (
+                        <span className="inline-block px-2 py-0.5 text-[9px] tracking-[0.12em] uppercase font-semibold bg-red-50 text-red-600">
                           Épuisé
                         </span>
-                      ) : (
-                        <div className="flex flex-wrap gap-1.5">
-                          {(p.sizes || []).map((taille) => {
-                            const q = Number(p.stock_by_size?.[taille]) || 0;
-                            return (
-                              <span
-                                key={taille}
-                                className={`inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-semibold border ${
-                                  q === 0
-                                    ? "border-red-200 bg-red-50 text-red-500"
-                                    : q <= 2
-                                    ? "border-[#B8985A]/40 bg-[#B8985A]/10 text-[#8a6d35]"
-                                    : "border-[#1A2332]/15 bg-[#EFE9DC] text-[#1A2332]"
-                                }`}
-                                title={q === 0 ? "Épuisé" : `${q} en stock`}
-                              >
-                                <span className="uppercase tracking-wide">{taille}</span>
-                                <span className="opacity-60">·</span>
-                                <span>{q}</span>
-                              </span>
-                            );
-                          })}
-                        </div>
+                      )}
+                      {p.is_new && (
+                        <span className="inline-block px-2 py-0.5 text-[9px] tracking-[0.12em] uppercase font-semibold bg-[#B8985A]/10 text-[#8a6d35]">
+                          Nouveau
+                        </span>
                       )}
                     </div>
+                    <p className="text-xs text-[#1A2332]/50 mt-1">
+                      {p.category} · <span className="capitalize">{p.gender}</span> · <span className="text-[#B8985A] font-semibold">{p.price.toLocaleString("fr-FR")} €</span>
+                    </p>
+                    {/* Stock détaillé par taille */}
+                    {stock > 0 && (
+                      <div className="flex flex-wrap gap-1.5 mt-2">
+                        {(p.sizes || []).map((taille) => {
+                          const q = Number(p.stock_by_size?.[taille]) || 0;
+                          return (
+                            <span
+                              key={taille}
+                              className={`inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-semibold border ${
+                                q === 0
+                                  ? "border-red-200 bg-red-50 text-red-500"
+                                  : q <= 2
+                                  ? "border-[#B8985A]/40 bg-[#B8985A]/10 text-[#8a6d35]"
+                                  : "border-[#1A2332]/15 bg-[#EFE9DC] text-[#1A2332]"
+                              }`}
+                              title={q === 0 ? "Épuisé" : `${q} en stock`}
+                            >
+                              <span className="uppercase tracking-wide">{taille}</span>
+                              <span className="opacity-60">·</span>
+                              <span>{q}</span>
+                            </span>
+                          );
+                        })}
+                      </div>
+                    )}
                   </div>
                   <div className="flex gap-2 flex-shrink-0">
                     <Link

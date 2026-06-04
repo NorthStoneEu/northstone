@@ -23,6 +23,16 @@ export default function AdminsManager({ estOwner = false }: { estOwner?: boolean
   const [admins, setAdmins] = useState<Admin[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [fichesOuvertes, setFichesOuvertes] = useState<Set<string>>(new Set());
+
+  const toggleFiche = (email: string) => {
+    setFichesOuvertes((prev) => {
+      const next = new Set(prev);
+      if (next.has(email)) next.delete(email);
+      else next.add(email);
+      return next;
+    });
+  };
 
   // ── Verrou 2FA (owner uniquement) ──
   const [deverrouille, setDeverrouille] = useState(!estOwner);
@@ -33,7 +43,6 @@ export default function AdminsManager({ estOwner = false }: { estOwner?: boolean
   const [tempsRestant, setTempsRestant] = useState(DUREE_ACCES_MS);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // Démarre le compte à rebours une fois déverrouillé
   useEffect(() => {
     if (!deverrouille || !estOwner) return;
     setTempsRestant(DUREE_ACCES_MS);
@@ -102,7 +111,6 @@ export default function AdminsManager({ estOwner = false }: { estOwner?: boolean
   const [poste, setPoste] = useState("");
   const [permissions, setPermissions] = useState<Permissions>({});
 
-  // ── Gestion des cases ──
   const aAction = (moduleId: string, actionId: string) =>
     (permissions[moduleId] || []).includes(actionId);
 
@@ -248,7 +256,6 @@ export default function AdminsManager({ estOwner = false }: { estOwner?: boolean
     }
   };
 
-  // ── Helpers affichage ──
   const labelModule = (id: string) => MODULES.find((m) => m.id === id)?.label || id;
   const labelAction = (moduleId: string, actionId: string) => {
     const mod = MODULES.find((m) => m.id === moduleId);
@@ -288,7 +295,7 @@ export default function AdminsManager({ estOwner = false }: { estOwner?: boolean
         </header>
 
         <main className="max-w-md mx-auto px-6 py-16">
-          <div className="bg-white border border-[#1A2332]/10 p-8">
+          <div className="bg-white border border-[#1A2332]/10 border-t-2 border-t-[#B8985A] p-8">
             <div className="flex justify-center mb-4">
               <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#B8985A" strokeWidth="1.5">
                 <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
@@ -368,14 +375,17 @@ export default function AdminsManager({ estOwner = false }: { estOwner?: boolean
           </div>
         )}
 
-        <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-[#1A2332] mb-2">
-          Gestion des accès
-        </h1>
-        <p className="text-sm text-[#1A2332]/60 mb-8">
-          {estOwner
-            ? "Ajoutez des collaborateurs et choisissez précisément les actions qu'ils peuvent effectuer dans chaque module."
-            : "Consultez les collaborateurs et leurs permissions."}
-        </p>
+        <div className="mb-8">
+          <p className="text-[11px] tracking-[0.3em] uppercase text-[#1A2332]/40 mb-2">Sécurité</p>
+          <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-[#1A2332]">
+            Gestion des accès
+          </h1>
+          <p className="text-sm text-[#1A2332]/55 mt-2">
+            {estOwner
+              ? "Ajoutez des collaborateurs et choisissez précisément les actions qu'ils peuvent effectuer dans chaque module."
+              : "Consultez les collaborateurs et leurs permissions."}
+          </p>
+        </div>
 
         {/* Bandeau consultation seule (non-owner) */}
         {!estOwner && (
@@ -388,7 +398,7 @@ export default function AdminsManager({ estOwner = false }: { estOwner?: boolean
 
         {/* Formulaire d'ajout/modification (owner uniquement) */}
         {estOwner && (
-          <div className="bg-white border border-[#1A2332]/10 p-6 sm:p-8 space-y-6 mb-10">
+          <div className="bg-white border border-[#1A2332]/10 border-t-2 border-t-[#B8985A] p-6 sm:p-8 space-y-6 mb-10">
             <h2 className="text-[11px] tracking-[0.3em] uppercase text-[#1A2332]/50 font-semibold">
               Ajouter / modifier un accès
             </h2>
@@ -547,53 +557,35 @@ export default function AdminsManager({ estOwner = false }: { estOwner?: boolean
             {admins.map((a) => {
               const perms = a.permissions && typeof a.permissions === "object" && !Array.isArray(a.permissions) ? a.permissions : {};
               const modulesActifs = Object.keys(perms).filter((k) => (perms[k] || []).length > 0);
+              const nbActionsTotal = modulesActifs.reduce((sum, m) => sum + (perms[m] || []).length, 0);
+              const ouverte = fichesOuvertes.has(a.email);
+              const initiales = ((a.prenom?.[0] || a.nom?.[0] || a.email[0] || "?") + (a.nom_famille?.[0] || "")).toUpperCase();
+
               return (
-                <div key={a.email} className="bg-white border border-[#1A2332]/10 p-5">
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="min-w-0">
-                      <p className="text-sm font-semibold text-[#1A2332] truncate">
-                        {a.nom || a.email}
-                      </p>
-                      <p className="text-xs text-[#1A2332]/50">{a.email}</p>
-                      {a.poste && (
-                        <p className="text-xs text-[#1A2332]/70 mt-0.5">{a.poste}</p>
-                      )}
-
-                      <div className="flex flex-wrap gap-1.5 mt-2">
-                        {modulesActifs.map((modId) => (
-                          <span
-                            key={modId}
-                            className="text-[9px] tracking-[0.1em] uppercase text-[#1A2332]/60 bg-[#EFE9DC] px-2 py-0.5"
-                          >
-                            {labelModule(modId)} ({(perms[modId] || []).length}/{nbActionsModule(modId)})
-                          </span>
-                        ))}
-                        {modulesActifs.length === 0 && (
-                          <span className="text-[10px] text-[#1A2332]/30 italic">Aucune permission</span>
-                        )}
+                <div key={a.email} className="bg-white border border-[#1A2332]/10">
+                  {/* En-tête de la fiche */}
+                  <div className="flex items-start justify-between gap-4 p-5">
+                    <div className="flex items-start gap-3 min-w-0">
+                      <div className="flex-shrink-0 w-11 h-11 bg-[#1A2332] text-[#B8985A] flex items-center justify-center text-sm font-bold tracking-wide">
+                        {initiales}
                       </div>
-
-                      {/* Détail des actions par module */}
-                      {modulesActifs.length > 0 && (
-                        <div className="mt-3 space-y-1">
-                          {modulesActifs.map((modId) => (
-                            <p key={modId} className="text-[11px] text-[#1A2332]/50">
-                              <span className="text-[#1A2332]/70 font-medium">{labelModule(modId)} :</span>{" "}
-                              {(perms[modId] || []).map((act) => labelAction(modId, act)).join(", ")}
-                            </p>
-                          ))}
-                        </div>
-                      )}
-
-                      {(a.ajoute_par || a.created_at) && (
-                        <p className="text-[10px] text-[#1A2332]/30 mt-2">
-                          {a.created_at && `Ajouté le ${formatDate(a.created_at)}`}
-                          {a.ajoute_par && ` · par ${a.ajoute_par}`}
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold text-[#1A2332] truncate">
+                          {a.nom || a.email}
                         </p>
-                      )}
+                        <p className="text-xs text-[#1A2332]/50">{a.email}</p>
+                        {a.poste && (
+                          <p className="text-[11px] tracking-[0.1em] uppercase text-[#B8985A] mt-1">{a.poste}</p>
+                        )}
+                        <p className="text-[11px] text-[#1A2332]/45 mt-1.5">
+                          {modulesActifs.length > 0
+                            ? `${modulesActifs.length} module(s) · ${nbActionsTotal} permission(s)`
+                            : "Aucune permission"}
+                        </p>
+                      </div>
                     </div>
                     {estOwner && (
-                      <div className="flex gap-2 flex-shrink-0">
+                      <div className="flex flex-col gap-2 flex-shrink-0">
                         <button
                           onClick={() => modifier(a)}
                           className="px-3 py-1.5 text-[10px] tracking-[0.15em] uppercase text-[#1A2332] border border-[#1A2332]/20 hover:border-[#1A2332] transition-colors"
@@ -619,6 +611,65 @@ export default function AdminsManager({ estOwner = false }: { estOwner?: boolean
                       </div>
                     )}
                   </div>
+
+                  {/* Bouton déplier les permissions */}
+                  {modulesActifs.length > 0 && (
+                    <button
+                      onClick={() => toggleFiche(a.email)}
+                      className="w-full flex items-center justify-between px-5 py-3 border-t border-[#1A2332]/10 text-[10px] tracking-[0.2em] uppercase text-[#1A2332]/60 hover:text-[#B8985A] transition-colors"
+                      style={{ background: "none", cursor: "pointer" }}
+                    >
+                      <span>{ouverte ? "Masquer les permissions" : "Voir les permissions"}</span>
+                      <svg
+                        width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+                        className={`transition-transform ${ouverte ? "rotate-180" : ""}`}
+                      >
+                        <polyline points="6 9 12 15 18 9" />
+                      </svg>
+                    </button>
+                  )}
+
+                  {/* Détail des permissions (déplié) */}
+                  {ouverte && modulesActifs.length > 0 && (
+                    <div className="px-5 pb-5 space-y-2.5 bg-[#F5F1EA]/50 border-t border-[#1A2332]/10">
+                      {modulesActifs.map((modId) => {
+                        const actions = perms[modId] || [];
+                        const complet = actions.length === nbActionsModule(modId);
+                        return (
+                          <div key={modId} className="pt-3">
+                            <div className="flex items-center gap-2 mb-1.5">
+                              <span className="text-xs font-semibold text-[#1A2332]">{labelModule(modId)}</span>
+                              <span className={`text-[9px] tracking-[0.1em] uppercase px-2 py-0.5 ${
+                                complet ? "bg-[#B8985A]/15 text-[#8a6d35]" : "bg-[#EFE9DC] text-[#1A2332]/60"
+                              }`}>
+                                {complet ? "Accès complet" : `${actions.length}/${nbActionsModule(modId)}`}
+                              </span>
+                            </div>
+                            <div className="flex flex-wrap gap-1.5">
+                              {actions.map((act) => (
+                                <span
+                                  key={act}
+                                  className="inline-flex items-center gap-1 text-[10px] text-[#1A2332]/70 bg-white border border-[#1A2332]/10 px-2 py-0.5"
+                                >
+                                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#B8985A" strokeWidth="3">
+                                    <polyline points="20 6 9 17 4 12" />
+                                  </svg>
+                                  {labelAction(modId, act)}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        );
+                      })}
+
+                      {(a.ajoute_par || a.created_at) && (
+                        <p className="text-[10px] text-[#1A2332]/35 pt-3 border-t border-[#1A2332]/10 mt-3">
+                          {a.created_at && `Ajouté le ${formatDate(a.created_at)}`}
+                          {a.ajoute_par && ` · par ${a.ajoute_par}`}
+                        </p>
+                      )}
+                    </div>
+                  )}
                 </div>
               );
             })}
