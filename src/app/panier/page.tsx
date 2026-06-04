@@ -1,6 +1,9 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useUser } from "@clerk/nextjs";
 import Header from "@/components/Header";
 import AnnouncementBar from "@/components/AnnouncementBar";
 import Footer from "@/components/Footer";
@@ -18,8 +21,42 @@ export default function PanierPage() {
     updateQuantity,
   } = useCart();
 
+  const router = useRouter();
+  const { isLoaded, isSignedIn } = useUser();
+  const [paiementEnCours, setPaiementEnCours] = useState(false);
+
   const remainingForFreeShipping = Math.max(0, FREE_SHIPPING_THRESHOLD - subtotal);
   const hasFreeShipping = subtotal >= FREE_SHIPPING_THRESHOLD;
+
+  // Lance le paiement Stripe
+  const payer = async () => {
+    // Vérifie la connexion : il faut un compte pour commander
+    if (!isSignedIn) {
+      // Redirige vers la connexion, puis retour au panier
+      router.push("/sign-in?redirect_url=/panier");
+      return;
+    }
+
+    setPaiementEnCours(true);
+    try {
+      const res = await fetch("/api/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ items }),
+      });
+      const data = await res.json();
+      if (data.url) {
+        // Redirige vers la page de paiement Stripe
+        window.location.href = data.url;
+      } else {
+        alert("Erreur : " + (data.error || "impossible de lancer le paiement"));
+        setPaiementEnCours(false);
+      }
+    } catch (e: any) {
+      alert("Erreur : " + (e.message || "inconnue"));
+      setPaiementEnCours(false);
+    }
+  };
 
   return (
     <>
@@ -242,15 +279,33 @@ export default function PanierPage() {
                     <span className="text-xl font-black text-[#1A2332]">{subtotal} €</span>
                   </div>
 
-                  {/* Boutons */}
-                  <button
-                    disabled
-                    className="block w-full text-center py-4 bg-[#1A2332]/15 text-[#1A2332]/40 text-[11px] tracking-[0.3em] uppercase font-semibold cursor-not-allowed mb-3"
-                    style={{ border: "none" }}
-                    title="Bientôt disponible"
-                  >
-                    Commander · Bientôt
-                  </button>
+                  {/* Bouton paiement */}
+                  {!isLoaded ? (
+                    <button
+                      disabled
+                      className="block w-full text-center py-4 bg-[#1A2332]/15 text-[#1A2332]/40 text-[11px] tracking-[0.3em] uppercase font-semibold cursor-not-allowed mb-3"
+                      style={{ border: "none" }}
+                    >
+                      Chargement...
+                    </button>
+                  ) : isSignedIn ? (
+                    <button
+                      onClick={payer}
+                      disabled={paiementEnCours}
+                      className="block w-full text-center py-4 bg-black text-[#B8985A] text-[11px] tracking-[0.3em] uppercase font-semibold hover:bg-[#1F1F1F] transition-all mb-3 disabled:opacity-50"
+                      style={{ border: "none", cursor: paiementEnCours ? "not-allowed" : "pointer" }}
+                    >
+                      {paiementEnCours ? "Redirection vers le paiement..." : "Commander"}
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => router.push("/sign-in?redirect_url=/panier")}
+                      className="block w-full text-center py-4 bg-black text-[#B8985A] text-[11px] tracking-[0.3em] uppercase font-semibold hover:bg-[#1F1F1F] transition-all mb-3"
+                      style={{ border: "none", cursor: "pointer" }}
+                    >
+                      Se connecter pour commander
+                    </button>
+                  )}
 
                   <p className="text-[10px] text-[#1A2332]/45 text-center leading-relaxed italic">
                     Paiement sécurisé · Retour gratuit sous 30 jours
