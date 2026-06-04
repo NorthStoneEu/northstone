@@ -1,7 +1,9 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useUser } from "@clerk/nextjs";
 import { useCart } from "@/context/CartContext";
 
 export default function CartDrawer() {
@@ -15,6 +17,10 @@ export default function CartDrawer() {
     updateQuantity,
   } = useCart();
 
+  const router = useRouter();
+  const { isLoaded, isSignedIn } = useUser();
+  const [paiementEnCours, setPaiementEnCours] = useState(false);
+
   // Bloquer le scroll body quand le drawer est ouvert
   useEffect(() => {
     if (isOpen) {
@@ -26,6 +32,34 @@ export default function CartDrawer() {
       document.body.style.overflow = "";
     };
   }, [isOpen]);
+
+  // Lance le paiement Stripe
+  const payer = async () => {
+    if (!isSignedIn) {
+      closeCart();
+      router.push("/sign-in?redirect_url=/panier");
+      return;
+    }
+
+    setPaiementEnCours(true);
+    try {
+      const res = await fetch("/api/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ items }),
+      });
+      const data = await res.json();
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        alert("Erreur : " + (data.error || "impossible de lancer le paiement"));
+        setPaiementEnCours(false);
+      }
+    } catch (e: any) {
+      alert("Erreur : " + (e.message || "inconnue"));
+      setPaiementEnCours(false);
+    }
+  };
 
   return (
     <div
@@ -252,14 +286,34 @@ export default function CartDrawer() {
             >
               Voir le panier
             </Link>
-            <button
-              disabled
-              className="block w-full text-center py-4 bg-[#1A2332]/15 text-[#1A2332]/40 text-[11px] tracking-[0.3em] uppercase font-semibold cursor-not-allowed"
-              style={{ border: "none" }}
-              title="Bientôt disponible"
-            >
-              Commander · Bientôt
-            </button>
+
+            {/* Bouton paiement adaptatif */}
+            {!isLoaded ? (
+              <button
+                disabled
+                className="block w-full text-center py-4 bg-[#1A2332]/15 text-[#1A2332]/40 text-[11px] tracking-[0.3em] uppercase font-semibold cursor-not-allowed"
+                style={{ border: "none" }}
+              >
+                Chargement...
+              </button>
+            ) : isSignedIn ? (
+              <button
+                onClick={payer}
+                disabled={paiementEnCours}
+                className="block w-full text-center py-4 bg-black text-[#B8985A] text-[11px] tracking-[0.3em] uppercase font-semibold hover:bg-[#1F1F1F] transition-all disabled:opacity-50"
+                style={{ border: "none", cursor: paiementEnCours ? "not-allowed" : "pointer" }}
+              >
+                {paiementEnCours ? "Redirection..." : "Commander"}
+              </button>
+            ) : (
+              <button
+                onClick={() => { closeCart(); router.push("/sign-in?redirect_url=/panier"); }}
+                className="block w-full text-center py-4 bg-black text-[#B8985A] text-[11px] tracking-[0.3em] uppercase font-semibold hover:bg-[#1F1F1F] transition-all"
+                style={{ border: "none", cursor: "pointer" }}
+              >
+                Se connecter pour commander
+              </button>
+            )}
           </div>
         )}
       </div>

@@ -1,18 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { stripe } from "@/lib/stripe";
+import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
-// Type d'un article reçu du panier (côté client)
+// Article reçu du panier — on ne fait CONFIANCE qu'à l'id, la couleur, la taille, la quantité.
+// Le prix et le nom sont re-vérifiés depuis la base (jamais le prix du client).
 type ItemRecu = {
   productId: number;
-  name: string;
-  price: number;
   color: string;
   size: string;
-  image: string;
   quantity: number;
 };
 
-// Pays de livraison autorisés (France + Europe)
 const PAYS_AUTORISES: any[] = [
   "FR", "BE", "LU", "DE", "ES", "IT", "PT", "NL", "AT", "IE",
   "FI", "GR", "SK", "SI", "EE", "LV", "LT", "CY", "MT",
@@ -30,31 +28,56 @@ export async function POST(req: NextRequest) {
 
     const origin = req.headers.get("origin") || "http://localhost:3000";
 
-    // Transforme chaque article du panier en "line item" Stripe
-    const line_items = items.map((item) => {
-      // Image : Stripe veut une URL absolue (http...). On filtre les images locales/relatives.
-      const images =
-        item.image && item.image.startsWith("http") ? [item.image] : [];
+    // Récupère les vrais produits depuis la base (prix de confiance)
+    const ids = [...new Set(items.map((i) => i.productId))];
+    const { data: produits, error } = await supabaseAdmin
+      .from("catalog_items")
+      .select("id, name, price, images_by_color, stock_by_size")
+      .in("id", ids);
 
-      return {
+    if (error) {
+      return NextResponse.json({ error: "Erreur lecture produits" }, { status: 500 });
+    }
+
+    const line_items: any[] = [];
+
+    for (const item of items) {
+      const produit = produits?.find((p) => p.id === item.productId);
+      if (!produit) {
+        return NextResponse.json(
+          { error: `Produit introuvable (id ${item.productId})` },
+          { status: 400 }
+        );
+      }
+
+      // Quantité valide
+      const qte = Math.max(1, Math.floor(item.quantity || 1));
+
+      // Image : première image de la couleur choisie, si c'est une URL absolue
+      let images: string[] = [];
+      const imagesCouleur = (produit.images_by_color || {})[item.color];
+      if (Array.isArray(imagesCouleur) && imagesCouleur[0]?.startsWith("http")) {
+        images = [imagesCouleur[0]];
+      }
+
+      line_items.push({
         price_data: {
           currency: "eur",
           product_data: {
-            name: item.name,
+            name: produit.name,
             description: `${item.color} · Taille ${item.size}`,
             images,
           },
-          // Stripe travaille en centimes : 70 € → 7000
-          unit_amount: Math.round(item.price * 100),
+          // PRIX DE CONFIANCE (depuis la base, jamais celui du client)
+          unit_amount: Math.round(Number(produit.price) * 100),
         },
-        quantity: item.quantity,
-      };
-    });
+        quantity: qte,
+      });
+    }
 
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
       line_items,
-      // Collecte de l'adresse de livraison (France + Europe)
       shipping_address_collection: {
         allowed_countries: PAYS_AUTORISES,
       },
@@ -62,6 +85,12 @@ export async function POST(req: NextRequest) {
       locale: "fr",
       success_url: `${origin}/commande/succes?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/panier`,
+      // On garde une trace des articles pour le webhook (création commande + stock)
+      metadata: {
+        articles: JSON.stringify(
+          items.map((i) => ({ id: i.productId, color: i.color, size: i.size, qty: i.quantity }))
+        ),
+      },
     });
 
     return NextResponse.json({ url: session.url });
