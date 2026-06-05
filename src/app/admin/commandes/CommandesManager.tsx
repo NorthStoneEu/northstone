@@ -20,7 +20,8 @@ type Commande = {
 };
 
 const STATUTS: Record<string, { label: string; classe: string }> = {
-  payee: { label: "Payée", classe: "text-blue-700 border-blue-200 bg-blue-50" },
+  payee: { label: "Confirmée", classe: "text-blue-700 border-blue-200 bg-blue-50" },
+  en_preparation: { label: "En préparation", classe: "text-purple-700 border-purple-200 bg-purple-50" },
   expediee: { label: "Expédiée", classe: "text-[#8a6d35] border-[#B8985A]/30 bg-[#B8985A]/10" },
   livree: { label: "Livrée", classe: "text-green-700 border-green-200 bg-green-50" },
   annulee: { label: "Annulée", classe: "text-red-600 border-red-200 bg-red-50" },
@@ -127,7 +128,8 @@ export default function CommandesManager() {
             <label className="text-[10px] tracking-[0.2em] uppercase text-[#1A2332]/50 mb-1">Statut</label>
             <select className={inputClass} value={filtreStatut} onChange={(e) => setFiltreStatut(e.target.value)}>
               <option value="tous">Tous</option>
-              <option value="payee">Payée</option>
+              <option value="payee">Confirmée</option>
+              <option value="en_preparation">En préparation</option>
               <option value="expediee">Expédiée</option>
               <option value="livree">Livrée</option>
               <option value="annulee">Annulée</option>

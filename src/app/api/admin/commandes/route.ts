@@ -29,7 +29,7 @@ async function verifierAcces(action: string): Promise<boolean> {
 }
 
 // Statuts autorisés
-const STATUTS_VALIDES = ["payee", "expediee", "livree", "annulee"];
+const STATUTS_VALIDES = ["payee", "en_preparation", "expediee", "livree", "annulee"];
 
 // GET : liste toutes les commandes — nécessite "voir"
 export async function GET() {

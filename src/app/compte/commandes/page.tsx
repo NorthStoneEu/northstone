@@ -18,6 +18,7 @@ type Commande = {
 
 const STATUTS: Record<string, { label: string; classe: string }> = {
   payee: { label: "Confirmée", classe: "text-blue-700 border-blue-200 bg-blue-50" },
+  en_preparation: { label: "En préparation", classe: "text-purple-700 border-purple-200 bg-purple-50" },
   expediee: { label: "Expédiée", classe: "text-[#8a6d35] border-[#B8985A]/30 bg-[#B8985A]/10" },
   livree: { label: "Livrée", classe: "text-green-700 border-green-200 bg-green-50" },
   annulee: { label: "Annulée", classe: "text-red-600 border-red-200 bg-red-50" },
