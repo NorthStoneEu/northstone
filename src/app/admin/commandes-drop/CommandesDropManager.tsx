@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 
-type Article = { id: number; name?: string; price?: number; color: string; size: string; qty: number; image?: string };
+type Article = { id: number; name?: string; price?: number; color: string; size: string; qty: number; image?: string; numero_serie?: string };
 type ProfilClient = { civility?: string; phone?: string; birthday?: string; newsletter_opted_in?: boolean };
 type Commande = {
   id: string; numero: string; clerk_user_id: string | null; email_client: string;
@@ -29,7 +29,6 @@ const ETAPES = [
 ];
 const ORDRE_ETAPE: Record<string, number> = { payee: 0, en_preparation: 1, expediee: 2, livree: 3 };
 
-// Petites icônes SVG
 const Icone = ({ d, size = 14 }: { d: string; size?: number }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
     <path d={d} />
@@ -44,9 +43,10 @@ const ICONES = {
   euro: "M4 10h12 M4 14h9 M19 6a7.5 7.5 0 1 0 0 12",
   truck: "M1 3h15v13H1z M16 8h4l3 3v5h-7V8z M5.5 18.5 m-2.5 0 a2.5 2.5 0 1 0 5 0 a2.5 2.5 0 1 0 -5 0 M18.5 18.5 m-2.5 0 a2.5 2.5 0 1 0 5 0 a2.5 2.5 0 1 0 -5 0",
   cal: "M3 4h18v18H3z M16 2v4 M8 2v4 M3 10h18",
+  star: "M12 2l2.4 7.4H22l-6 4.6 2.3 7.4-6.3-4.6-6.3 4.6L8 14 2 9.4h7.6z",
 };
 
-export default function CommandesManager() {
+export default function CommandesDropManager() {
   const [commandes, setCommandes] = useState<Commande[]>([]);
   const [loading, setLoading] = useState(true);
   const [selId, setSelId] = useState<string | null>(null);
@@ -56,15 +56,13 @@ export default function CommandesManager() {
 
   const charger = () => {
     setLoading(true);
-    fetch("/api/admin/commandes?type=permanente", { credentials: "include" })
+    fetch("/api/admin/commandes?type=drop", { credentials: "include" })
       .then((r) => r.json())
       .then((data) => { setCommandes(data.commandes || []); setLoading(false); })
       .catch(() => setLoading(false));
   };
 
   useEffect(() => { charger(); }, []);
-
-  // Bloque le scroll quand le panneau est ouvert
   useEffect(() => {
     document.body.style.overflow = selId ? "hidden" : "";
     return () => { document.body.style.overflow = ""; };
@@ -81,15 +79,16 @@ export default function CommandesManager() {
 
   const selectionnee = commandes.find((c) => c.id === selId) || null;
 
-  const rembourser = async (id: string, numero: string) => {
-    if (!confirm(`Rembourser la commande ${numero} ?\n\nLe client sera remboursé via Stripe et le stock sera remis. Cette action est irréversible.`)) return;
-    setMajEnCours(id);
-    const res = await fetch("/api/admin/commandes/rembourser", {
-      method: "POST", headers: { "Content-Type": "application/json" }, credentials: "include", body: JSON.stringify({ id }),
-    });
-    setMajEnCours(null);
-    if (res.ok) { charger(); alert("Remboursement effectué ✅"); }
-    else { const data = await res.json(); alert("Erreur : " + (data.error || "inconnue")); }
+  const gererDefaut = (numero: string) => {
+    alert(
+      `Gestion d'un défaut — ${numero}\n\n` +
+      `Procédure pièce de drop :\n` +
+      `1. Le client renvoie la pièce défectueuse\n` +
+      `2. Une nouvelle pièce est reconfectionnée (avec certificat)\n` +
+      `3. La pièce défectueuse est détruite\n\n` +
+      `Aucun remboursement : les pièces de drop sont uniques et numérotées.\n\n` +
+      `Le suivi complet des remplacements sera disponible prochainement.`
+    );
   };
 
   const changerStatut = async (id: string, statut: string) => {
@@ -103,7 +102,7 @@ export default function CommandesManager() {
   };
 
   const genererEtiquette = () => {
-    alert("Génération d'étiquette — bientôt disponible.\n\nCette fonction sera branchée avec Sendcloud / Mondial Relay une fois votre compte transporteur actif.");
+    alert("Génération d'étiquette — bientôt disponible.\n\nLes pièces de drop sont expédiées en Colissimo avec signature. Cette fonction sera branchée avec Sendcloud une fois votre compte transporteur actif.");
   };
 
   const formatPrix = (centimes: number) => `${(centimes / 100).toLocaleString("fr-FR")} €`;
@@ -118,48 +117,43 @@ export default function CommandesManager() {
 
   return (
     <div style={{ minHeight: "100vh", backgroundColor: "#F5F1EA" }}>
-      {/* EN-TÊTE compact */}
-      <header style={{ backgroundColor: "#0A0A0A", color: "#fff", borderBottom: "1px solid rgba(184,152,90,0.25)" }}>
+      {/* EN-TÊTE — accent doré pour distinguer du module boutique */}
+      <header style={{ backgroundColor: "#0A0A0A", color: "#fff", borderBottom: "1px solid rgba(184,152,90,0.4)" }}>
         <div className="max-w-6xl mx-auto px-6 flex items-center justify-between" style={{ height: "56px" }}>
           <div className="flex items-center gap-3">
             <Link href="/admin" style={{ fontSize: "15px", fontWeight: 800, letterSpacing: "0.2em", color: "#fff" }}>NORTHSTONE</Link>
-            <span style={{ fontSize: "9px", letterSpacing: "0.3em", textTransform: "uppercase", color: "#B8985A", border: "1px solid rgba(184,152,90,0.4)", padding: "2px 8px" }}>Admin</span>
+            <span style={{ fontSize: "9px", letterSpacing: "0.3em", textTransform: "uppercase", color: "#0A0A0A", backgroundColor: "#B8985A", padding: "2px 8px", fontWeight: 700 }}>Drops</span>
           </div>
           <Link href="/admin" style={{ fontSize: "11px", letterSpacing: "0.15em", textTransform: "uppercase", color: "rgba(255,255,255,0.6)" }} className="hover:text-white transition-colors">← Tableau de bord</Link>
         </div>
       </header>
 
       <main className="max-w-6xl mx-auto px-6 py-8">
-        {/* Titre + stats inline */}
         <div className="flex items-end justify-between flex-wrap gap-4 mb-6">
           <div>
-            <p style={{ fontSize: "10px", letterSpacing: "0.3em", textTransform: "uppercase", color: "#B8985A", marginBottom: "4px" }}>Boutique</p>
-            <h1 style={{ fontSize: "28px", fontWeight: 800, color: "#1A2332", letterSpacing: "-0.01em" }}>Commandes</h1>
+            <p style={{ fontSize: "10px", letterSpacing: "0.3em", textTransform: "uppercase", color: "#B8985A", marginBottom: "4px" }}>Édition limitée</p>
+            <h1 style={{ fontSize: "28px", fontWeight: 800, color: "#1A2332", letterSpacing: "-0.01em" }}>Commandes Drop</h1>
+            <p style={{ fontSize: "12.5px", color: "rgba(26,35,50,0.6)", marginTop: "4px" }}>Pièces numérotées · 1 exemplaire par client · expédition signature</p>
           </div>
           <div className="flex gap-5">
             <div style={{ textAlign: "right" }}>
               <p style={{ fontSize: "22px", fontWeight: 800, color: "#1A2332", lineHeight: 1 }}>{commandes.length}</p>
-              <p style={{ fontSize: "10px", letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(26,35,50,0.5)", marginTop: "3px" }}>Total</p>
+              <p style={{ fontSize: "10px", letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(26,35,50,0.5)", marginTop: "3px" }}>Pièces vendues</p>
             </div>
             <div style={{ textAlign: "right" }}>
               <p style={{ fontSize: "22px", fontWeight: 800, color: "#8a6d35", lineHeight: 1 }}>{compteur("payee") + compteur("en_preparation")}</p>
-              <p style={{ fontSize: "10px", letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(26,35,50,0.5)", marginTop: "3px" }}>À traiter</p>
+              <p style={{ fontSize: "10px", letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(26,35,50,0.5)", marginTop: "3px" }}>À expédier</p>
             </div>
           </div>
         </div>
 
-        {/* Barre recherche + filtre */}
         <div className="flex flex-wrap gap-3 mb-5">
           <div style={{ position: "relative", flex: 1, minWidth: "240px" }}>
             <span style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", color: "rgba(26,35,50,0.35)" }}>
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></svg>
             </span>
-            <input
-              placeholder="Rechercher (numéro, email, nom)"
-              value={recherche}
-              onChange={(e) => setRecherche(e.target.value)}
-              style={{ width: "100%", background: "#fff", border: "1px solid rgba(26,35,50,0.15)", padding: "10px 12px 10px 36px", fontSize: "13px", color: "#1A2332", outline: "none" }}
-            />
+            <input placeholder="Rechercher (numéro, email, nom)" value={recherche} onChange={(e) => setRecherche(e.target.value)}
+              style={{ width: "100%", background: "#fff", border: "1px solid rgba(26,35,50,0.15)", padding: "10px 12px 10px 36px", fontSize: "13px", color: "#1A2332", outline: "none" }} />
           </div>
           <select value={filtreStatut} onChange={(e) => setFiltreStatut(e.target.value)} style={{ background: "#fff", border: "1px solid rgba(26,35,50,0.15)", padding: "10px 12px", fontSize: "13px", color: "#1A2332", outline: "none", cursor: "pointer" }}>
             <option value="tous">Tous les statuts ({commandes.length})</option>
@@ -172,9 +166,7 @@ export default function CommandesManager() {
           </select>
         </div>
 
-        {/* TABLEAU */}
         <div style={{ backgroundColor: "#fff", border: "1px solid rgba(26,35,50,0.12)" }}>
-          {/* En-tête tableau */}
           <div className="hidden sm:grid" style={{ gridTemplateColumns: "2.2fr 2fr 1.2fr 1.3fr 1fr 32px", gap: "12px", padding: "12px 18px", borderBottom: "1px solid rgba(26,35,50,0.12)", backgroundColor: "rgba(245,241,234,0.5)" }}>
             {["Commande", "Client", "Date", "Statut", "Montant", ""].map((h, i) => (
               <span key={i} style={{ fontSize: "9px", letterSpacing: "0.18em", textTransform: "uppercase", color: "rgba(26,35,50,0.5)", fontWeight: 600, textAlign: i === 4 ? "right" : "left" }}>{h}</span>
@@ -184,19 +176,16 @@ export default function CommandesManager() {
           {loading ? (
             <p className="text-center py-14" style={{ color: "rgba(26,35,50,0.5)", fontSize: "13px" }}>Chargement…</p>
           ) : commandesFiltrees.length === 0 ? (
-            <p className="text-center py-14" style={{ color: "rgba(26,35,50,0.5)", fontSize: "13px" }}>Aucune commande.</p>
+            <div className="text-center py-16">
+              <p style={{ color: "rgba(26,35,50,0.5)", fontSize: "13px", marginBottom: "6px" }}>Aucune commande de drop pour le moment.</p>
+              <p style={{ color: "rgba(26,35,50,0.4)", fontSize: "12px" }}>Les commandes apparaîtront ici lors du prochain drop.</p>
+            </div>
           ) : (
             commandesFiltrees.map((c) => {
               const st = STATUTS[c.statut] || { label: c.statut, couleur: "#666", bg: "rgba(0,0,0,0.04)" };
-              const nbArticles = (c.articles || []).reduce((s, a) => s + (a.qty || 0), 0);
               return (
-                <button
-                  key={c.id}
-                  onClick={() => setSelId(c.id)}
-                  className="w-full grid items-center hover:bg-[#F5F1EA]/60 transition-colors"
-                  style={{ gridTemplateColumns: "2.2fr 2fr 1.2fr 1.3fr 1fr 32px", gap: "12px", padding: "14px 18px", borderBottom: "1px solid rgba(26,35,50,0.07)", background: "none", cursor: "pointer", textAlign: "left" }}
-                >
-                  {/* Commande */}
+                <button key={c.id} onClick={() => setSelId(c.id)} className="w-full grid items-center hover:bg-[#F5F1EA]/60 transition-colors"
+                  style={{ gridTemplateColumns: "2.2fr 2fr 1.2fr 1.3fr 1fr 32px", gap: "12px", padding: "14px 18px", borderBottom: "1px solid rgba(26,35,50,0.07)", background: "none", cursor: "pointer", textAlign: "left" }}>
                   <div className="flex items-center gap-3 min-w-0">
                     <div style={{ width: "38px", height: "46px", backgroundColor: "#EFE9DC", overflow: "hidden", flexShrink: 0 }}>
                       {c.articles?.[0]?.image ? (
@@ -206,26 +195,21 @@ export default function CommandesManager() {
                     </div>
                     <div className="min-w-0">
                       <p style={{ fontSize: "13px", fontWeight: 700, color: "#1A2332" }}>{c.numero}</p>
-                      <p style={{ fontSize: "11px", color: "rgba(26,35,50,0.5)" }}>{nbArticles} article{nbArticles > 1 ? "s" : ""}</p>
+                      <p style={{ fontSize: "11px", color: "#8a6d35" }}>Pièce de drop</p>
                     </div>
                   </div>
-                  {/* Client */}
                   <div className="min-w-0">
                     <p style={{ fontSize: "13px", color: "#1A2332", fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.client_nom || "—"}</p>
                     <p style={{ fontSize: "11px", color: "rgba(26,35,50,0.5)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.email_client}</p>
                   </div>
-                  {/* Date */}
                   <span style={{ fontSize: "12px", color: "rgba(26,35,50,0.7)" }}>{formatDate(c.created_at)}</span>
-                  {/* Statut */}
                   <div>
                     <span style={{ fontSize: "10px", letterSpacing: "0.08em", textTransform: "uppercase", color: st.couleur, backgroundColor: st.bg, padding: "4px 9px", fontWeight: 600, display: "inline-flex", alignItems: "center", gap: "5px" }}>
                       <span style={{ width: "5px", height: "5px", borderRadius: "50%", backgroundColor: st.couleur }} />
                       {st.label}
                     </span>
                   </div>
-                  {/* Montant */}
                   <span style={{ fontSize: "14px", fontWeight: 700, color: "#1A2332", textAlign: "right" }}>{formatPrix(c.montant_total)}</span>
-                  {/* Chevron */}
                   <span style={{ color: "rgba(26,35,50,0.3)", textAlign: "right" }}>
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="9 18 15 12 9 6" /></svg>
                   </span>
@@ -234,14 +218,12 @@ export default function CommandesManager() {
             })
           )}
         </div>
-        <p style={{ fontSize: "11px", color: "rgba(26,35,50,0.45)", marginTop: "10px" }}>{commandesFiltrees.length} commande(s) affichée(s)</p>
+        <p style={{ fontSize: "11px", color: "rgba(26,35,50,0.45)", marginTop: "10px" }}>{commandesFiltrees.length} pièce(s) affichée(s)</p>
       </main>
 
-      {/* PANNEAU LATÉRAL DÉTAIL */}
+      {/* PANNEAU LATÉRAL */}
       <div style={{ position: "fixed", inset: 0, zIndex: 100, pointerEvents: selId ? "auto" : "none" }}>
-        {/* Overlay */}
         <div onClick={() => setSelId(null)} style={{ position: "absolute", inset: 0, backgroundColor: "rgba(10,10,10,0.4)", backdropFilter: "blur(2px)", opacity: selId ? 1 : 0, transition: "opacity 0.3s" }} />
-        {/* Panneau */}
         <div style={{ position: "absolute", top: 0, right: 0, bottom: 0, width: "100%", maxWidth: "520px", backgroundColor: "#F5F1EA", boxShadow: "-20px 0 60px rgba(0,0,0,0.3)", transform: selId ? "translateX(0)" : "translateX(100%)", transition: "transform 0.4s cubic-bezier(0.16,1,0.3,1)", display: "flex", flexDirection: "column" }}>
           {selectionnee && (() => {
             const c = selectionnee;
@@ -252,7 +234,6 @@ export default function CommandesManager() {
             const profil = c.client_profil;
             return (
               <>
-                {/* Header panneau */}
                 <div style={{ flexShrink: 0, borderBottom: "1px solid rgba(26,35,50,0.1)" }}>
                   <div style={{ height: "3px", backgroundColor: "#B8985A" }} />
                   <div className="flex items-center justify-between" style={{ padding: "18px 24px" }}>
@@ -261,7 +242,8 @@ export default function CommandesManager() {
                         <h2 style={{ fontSize: "18px", fontWeight: 800, color: "#1A2332" }}>{c.numero}</h2>
                         <span style={{ fontSize: "10px", letterSpacing: "0.08em", textTransform: "uppercase", color: st.couleur, backgroundColor: st.bg, padding: "4px 9px", fontWeight: 600 }}>{st.label}</span>
                       </div>
-                      <p style={{ fontSize: "12px", color: "rgba(26,35,50,0.55)", marginTop: "4px" }}>{formatDateLong(c.created_at)}</p>
+                      <p style={{ fontSize: "11px", color: "#8a6d35", marginTop: "4px", letterSpacing: "0.05em", textTransform: "uppercase" }}>Pièce de drop · édition limitée</p>
+                      <p style={{ fontSize: "12px", color: "rgba(26,35,50,0.55)", marginTop: "2px" }}>{formatDateLong(c.created_at)}</p>
                     </div>
                     <button onClick={() => setSelId(null)} style={{ background: "none", border: "none", cursor: "pointer", color: "#1A2332", padding: "4px" }}>
                       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><line x1="6" y1="6" x2="18" y2="18" /><line x1="18" y1="6" x2="6" y2="18" /></svg>
@@ -269,9 +251,7 @@ export default function CommandesManager() {
                   </div>
                 </div>
 
-                {/* Corps scrollable */}
                 <div style={{ flex: 1, overflowY: "auto", padding: "24px" }} className="space-y-7">
-                  {/* Timeline */}
                   {!estFinale ? (
                     <div>
                       <p style={{ fontSize: "9px", letterSpacing: "0.2em", textTransform: "uppercase", color: "rgba(26,35,50,0.5)", marginBottom: "18px" }}>Suivi</p>
@@ -299,7 +279,6 @@ export default function CommandesManager() {
                     </div>
                   )}
 
-                  {/* Client */}
                   <div style={{ backgroundColor: "#fff", border: "1px solid rgba(26,35,50,0.1)", padding: "16px" }}>
                     <p className="flex items-center gap-2" style={{ fontSize: "9px", letterSpacing: "0.2em", textTransform: "uppercase", color: "#B8985A", marginBottom: "12px" }}>
                       <span style={{ color: "#B8985A" }}><Icone d={ICONES.user} size={13} /></span> Client
@@ -310,27 +289,20 @@ export default function CommandesManager() {
                       {profil?.phone && <p className="flex items-center gap-2" style={{ fontSize: "12.5px", color: "rgba(26,35,50,0.75)" }}><span style={{ color: "rgba(26,35,50,0.4)" }}><Icone d={ICONES.phone} size={13} /></span> {profil.phone}</p>}
                       {profil?.birthday && <p className="flex items-center gap-2" style={{ fontSize: "12.5px", color: "rgba(26,35,50,0.75)" }}><span style={{ color: "rgba(26,35,50,0.4)" }}><Icone d={ICONES.cal} size={13} /></span> {formatDate(profil.birthday)}</p>}
                     </div>
-                    <div className="flex items-center gap-2 flex-wrap" style={{ marginTop: "12px" }}>
-                      <span style={{ fontSize: "10px", letterSpacing: "0.05em", color: "#8a6d35", border: "1px solid rgba(184,152,90,0.4)", padding: "3px 9px" }}>{c.client_nb_commandes || 1} commande{(c.client_nb_commandes || 1) > 1 ? "s" : ""}</span>
-                      {(c.client_nb_commandes || 1) === 1 && <span style={{ fontSize: "10px", letterSpacing: "0.05em", color: "#2C5282", border: "1px solid rgba(44,82,130,0.3)", padding: "3px 9px" }}>Nouveau client</span>}
-                      {profil?.newsletter_opted_in && <span style={{ fontSize: "10px", letterSpacing: "0.05em", color: "#2F6F4E", border: "1px solid rgba(47,111,78,0.3)", padding: "3px 9px" }}>Newsletter</span>}
-                    </div>
                   </div>
 
-                  {/* Adresse */}
                   <div style={{ backgroundColor: "#fff", border: "1px solid rgba(26,35,50,0.1)", padding: "16px" }}>
                     <p className="flex items-center gap-2" style={{ fontSize: "9px", letterSpacing: "0.2em", textTransform: "uppercase", color: "#B8985A", marginBottom: "12px" }}>
-                      <span style={{ color: "#B8985A" }}><Icone d={ICONES.pin} size={13} /></span> Livraison
+                      <span style={{ color: "#B8985A" }}><Icone d={ICONES.pin} size={13} /></span> Livraison (signature)
                     </p>
                     <div style={{ fontSize: "13px", color: "#1A2332", lineHeight: 1.6 }}>
                       {formatAdresse(c.adresse_livraison).map((l, i) => <p key={i}>{l}</p>)}
                     </div>
                   </div>
 
-                  {/* Articles */}
                   <div style={{ backgroundColor: "#fff", border: "1px solid rgba(26,35,50,0.1)", padding: "16px" }}>
                     <p className="flex items-center gap-2" style={{ fontSize: "9px", letterSpacing: "0.2em", textTransform: "uppercase", color: "#B8985A", marginBottom: "12px" }}>
-                      <span style={{ color: "#B8985A" }}><Icone d={ICONES.box} size={13} /></span> Articles
+                      <span style={{ color: "#B8985A" }}><Icone d={ICONES.star} size={13} /></span> Pièce
                     </p>
                     {(c.articles || []).map((a, i) => (
                       <div key={i} className="flex gap-3 items-center" style={{ padding: "10px 0", borderBottom: i < c.articles.length - 1 ? "1px solid rgba(26,35,50,0.08)" : "none" }}>
@@ -342,14 +314,13 @@ export default function CommandesManager() {
                         </div>
                         <div className="flex-1 min-w-0">
                           <p style={{ fontSize: "13px", fontWeight: 600, color: "#1A2332" }}>{a.name || `Produit #${a.id}`}</p>
-                          <p style={{ fontSize: "11.5px", color: "rgba(26,35,50,0.6)" }}>{a.color} · Taille {a.size} · ×{a.qty}</p>
+                          <p style={{ fontSize: "11.5px", color: "rgba(26,35,50,0.6)" }}>{a.color} · Taille {a.size}{a.numero_serie ? ` · N° ${a.numero_serie}` : ""}</p>
                         </div>
                         <p style={{ fontSize: "13px", fontWeight: 600, color: "#1A2332" }}>{a.price ? formatPrixEuro(Number(a.price) * a.qty) : "—"}</p>
                       </div>
                     ))}
                   </div>
 
-                  {/* Montants */}
                   <div style={{ backgroundColor: "#fff", border: "1px solid rgba(26,35,50,0.1)", padding: "16px" }}>
                     <p className="flex items-center gap-2" style={{ fontSize: "9px", letterSpacing: "0.2em", textTransform: "uppercase", color: "#B8985A", marginBottom: "12px" }}>
                       <span style={{ color: "#B8985A" }}><Icone d={ICONES.euro} size={13} /></span> Montants
@@ -362,7 +333,6 @@ export default function CommandesManager() {
                     </div>
                   </div>
 
-                  {/* Statut */}
                   <div>
                     <p style={{ fontSize: "9px", letterSpacing: "0.2em", textTransform: "uppercase", color: "rgba(26,35,50,0.5)", marginBottom: "10px" }}>Faire évoluer le statut</p>
                     {estFinale ? (
@@ -383,19 +353,16 @@ export default function CommandesManager() {
                   </div>
                 </div>
 
-                {/* Footer actions */}
                 <div style={{ flexShrink: 0, borderTop: "1px solid rgba(26,35,50,0.1)", padding: "16px 24px", backgroundColor: "#fff" }}>
                   <div className="flex gap-3">
                     <button onClick={genererEtiquette} style={{ flex: 1, fontSize: "10px", letterSpacing: "0.12em", textTransform: "uppercase", padding: "12px", border: "none", backgroundColor: "#1A2332", color: "#B8985A", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "7px" }}>
-                      <Icone d={ICONES.truck} size={14} /> Étiquette
+                      <Icone d={ICONES.truck} size={14} /> Étiquette signature
                     </button>
-                    {c.statut !== "remboursee" && (
-                      <button onClick={() => rembourser(c.id, c.numero)} disabled={majEnCours === c.id} style={{ flex: 1, fontSize: "10px", letterSpacing: "0.12em", textTransform: "uppercase", padding: "12px", border: "1px solid rgba(181,101,29,0.5)", backgroundColor: "transparent", color: "#B5651D", cursor: "pointer", opacity: majEnCours === c.id ? 0.4 : 1 }}>
-                        Rembourser
-                      </button>
-                    )}
+                    <button onClick={() => gererDefaut(c.numero)} style={{ flex: 1, fontSize: "10px", letterSpacing: "0.12em", textTransform: "uppercase", padding: "12px", border: "1px solid rgba(26,35,50,0.25)", backgroundColor: "transparent", color: "#1A2332", cursor: "pointer" }}>
+                      Gérer un défaut
+                    </button>
                   </div>
-                  <p style={{ fontSize: "9.5px", color: "rgba(26,35,50,0.45)", fontStyle: "italic", marginTop: "8px", textAlign: "center" }}>Étiquette via Sendcloud · Remboursement via Stripe</p>
+                  <p style={{ fontSize: "9.5px", color: "rgba(26,35,50,0.45)", fontStyle: "italic", marginTop: "8px", textAlign: "center" }}>Colissimo signature · Pièce unique, non remboursable</p>
                 </div>
               </>
             );

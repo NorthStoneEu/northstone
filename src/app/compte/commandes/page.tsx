@@ -22,6 +22,7 @@ const STATUTS: Record<string, { label: string; classe: string }> = {
   expediee: { label: "Expédiée", classe: "text-[#8a6d35] border-[#B8985A]/30 bg-[#B8985A]/10" },
   livree: { label: "Livrée", classe: "text-green-700 border-green-200 bg-green-50" },
   annulee: { label: "Annulée", classe: "text-red-600 border-red-200 bg-red-50" },
+  remboursee: { label: "Remboursée", classe: "text-orange-700 border-orange-200 bg-orange-50" },
 };
 
 export default function MesCommandesPage() {

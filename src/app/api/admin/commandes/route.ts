@@ -28,27 +28,88 @@ async function verifierAcces(action: string): Promise<boolean> {
   return await aAcces(email, "commandes", action);
 }
 
-// Statuts autorisés
-const STATUTS_VALIDES = ["payee", "en_preparation", "expediee", "livree", "annulee"];
+const STATUTS_VALIDES = ["payee", "en_preparation", "expediee", "livree", "annulee", "remboursee"];
 
-// GET : liste toutes les commandes — nécessite "voir"
-export async function GET() {
+// GET : liste les commandes (filtrables par type), enrichies du profil client + nom Clerk + nb commandes
+export async function GET(req: NextRequest) {
   if (!(await verifierAcces("voir"))) {
     return NextResponse.json({ error: "Non autorisé" }, { status: 403 });
   }
 
-  const { data, error } = await supabaseAdmin
+  const { searchParams } = new URL(req.url);
+  const type = searchParams.get("type"); // 'permanente', 'drop', ou null (tout)
+
+  let query = supabaseAdmin
     .from("commandes")
     .select("*")
     .order("created_at", { ascending: false });
 
+  if (type === "permanente" || type === "drop") {
+    query = query.eq("type", type);
+  }
+
+  const { data: commandes, error } = await query;
+
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
-  return NextResponse.json({ commandes: data });
+
+  // Récupère tous les profils Supabase d'un coup
+  const userIds = [...new Set((commandes || []).map((c) => c.clerk_user_id).filter(Boolean))];
+
+  const profils: Record<string, any> = {};
+  if (userIds.length > 0) {
+    const { data: profilsData } = await supabaseAdmin
+      .from("user_profiles")
+      .select("clerk_user_id, civility, phone, birthday, newsletter_opted_in")
+      .in("clerk_user_id", userIds);
+    (profilsData || []).forEach((p) => {
+      profils[p.clerk_user_id] = p;
+    });
+  }
+
+  // Nombre de commandes par client (pour l'historique)
+  const nbCommandesParClient: Record<string, number> = {};
+  (commandes || []).forEach((c) => {
+    if (c.clerk_user_id) {
+      nbCommandesParClient[c.clerk_user_id] = (nbCommandesParClient[c.clerk_user_id] || 0) + 1;
+    }
+  });
+
+  // Récupère le nom/prénom depuis Clerk pour chaque client
+  const nomsClerk: Record<string, { nom: string; email: string }> = {};
+  try {
+    const client = await clerkClient();
+    await Promise.all(
+      userIds.map(async (uid) => {
+        try {
+          const u = await client.users.getUser(uid as string);
+          const nom = `${u.firstName || ""} ${u.lastName || ""}`.trim();
+          nomsClerk[uid as string] = {
+            nom,
+            email: u.emailAddresses?.[0]?.emailAddress || "",
+          };
+        } catch {
+          // utilisateur introuvable côté Clerk, on ignore
+        }
+      })
+    );
+  } catch {
+    // clerkClient indisponible, on continue sans
+  }
+
+  // Enrichit chaque commande
+  const enrichies = (commandes || []).map((c) => ({
+    ...c,
+    client_profil: c.clerk_user_id ? profils[c.clerk_user_id] || null : null,
+    client_nom: c.clerk_user_id ? nomsClerk[c.clerk_user_id]?.nom || "" : "",
+    client_nb_commandes: c.clerk_user_id ? nbCommandesParClient[c.clerk_user_id] || 1 : 1,
+  }));
+
+  return NextResponse.json({ commandes: enrichies });
 }
 
-// PUT : changer le statut d'une commande — nécessite "modifier_statut"
+// PUT : changer le statut
 export async function PUT(req: NextRequest) {
   if (!(await verifierAcces("modifier_statut"))) {
     return NextResponse.json({ error: "Non autorisé" }, { status: 403 });
@@ -63,7 +124,6 @@ export async function PUT(req: NextRequest) {
     return NextResponse.json({ error: "Statut invalide" }, { status: 400 });
   }
 
-  // État avant (pour le log)
   const { data: avant } = await supabaseAdmin
     .from("commandes")
     .select("*")
@@ -81,7 +141,6 @@ export async function PUT(req: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  // Log
   const acteur = await infosActeur();
   const ctx = contexteRequete(req);
   await enregistrerLog({

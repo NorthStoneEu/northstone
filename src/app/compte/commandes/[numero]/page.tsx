@@ -24,9 +24,10 @@ const ETAPES = ["Confirmée", "En préparation", "Expédiée", "Livrée"];
 // Mappe le statut DB vers l'index d'étape atteint
 function indexEtape(statut: string): number {
   switch (statut) {
-    case "payee": return 1;       // Confirmée + En préparation
-    case "expediee": return 2;    // + Expédiée
-    case "livree": return 3;      // + Livrée
+    case "payee": return 0;            // Confirmée
+    case "en_preparation": return 1;   // En préparation
+    case "expediee": return 2;         // Expédiée
+    case "livree": return 3;           // Livrée
     default: return 0;
   }
 }
@@ -83,6 +84,7 @@ export default function DetailCommandePage() {
   };
 
   const estAnnulee = commande?.statut === "annulee";
+  const estRemboursee = commande?.statut === "remboursee";
   const etapeActuelle = commande ? indexEtape(commande.statut) : 0;
 
   // Calcul du sous-total articles (somme price * qty)
@@ -140,7 +142,16 @@ export default function DetailCommandePage() {
               <div className="bg-white border border-[#1A2332]/10 p-6 sm:p-8 mb-6">
                 <p className="text-[10px] tracking-[0.3em] uppercase text-[#1A2332]/45 mb-6">Suivi de commande</p>
 
-                {estAnnulee ? (
+                {estRemboursee ? (
+                  <div className="flex items-center gap-3 text-orange-700">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                      <path d="M3 12a9 9 0 1 0 9-9 9 9 0 0 0-9 9z" />
+                      <polyline points="12 7 12 12 9 14" />
+                      <path d="M3 12H1l2.5-3L6 12H4" />
+                    </svg>
+                    <span className="text-sm font-semibold">Commande remboursée</span>
+                  </div>
+                ) : estAnnulee ? (
                   <div className="flex items-center gap-3 text-red-600">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                       <circle cx="12" cy="12" r="10" />
