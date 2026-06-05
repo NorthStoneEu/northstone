@@ -15,6 +15,15 @@ export const MODULES = [
     ],
   },
   {
+    id: "commandes",
+    label: "Commandes",
+    actions: [
+      { id: "voir", label: "Voir les commandes" },
+      { id: "modifier_statut", label: "Changer le statut (expédiée, livrée...)" },
+      { id: "annuler", label: "Annuler une commande" },
+    ],
+  },
+  {
     id: "dashboard",
     label: "Tableau de bord & statistiques",
     actions: [

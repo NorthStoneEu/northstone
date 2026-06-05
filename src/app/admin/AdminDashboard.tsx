@@ -25,8 +25,8 @@ export default function AdminDashboard({
   // Sections du back-office (certaines cartes sont conditionnelles)
   const sections = [
     { titre: "Produits", desc: "Gérer la collection permanente", href: "/admin/produits", actif: true, icone: "M3 7l1.5 12h15L21 7M3 7l3-4h12l3 4M3 7h18M9 11v4M15 11v4" },
-    { titre: "Drops", desc: "Créer et gérer les drops", href: "/admin/drops", actif: false, icone: "M12 2l2 7h7l-5.5 4 2 7L12 16l-5.5 4 2-7L3 9h7z" },
-    { titre: "Commandes", desc: "Suivre les commandes", href: "/admin/commandes", actif: false, icone: "M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4zM3 6h18M16 10a4 4 0 0 1-8 0" },
+    { titre: "Drops", desc: "Créer et gérer les drops", href: "/admin/drops", actif: true, icone: "M12 2l2 7h7l-5.5 4 2 7L12 16l-5.5 4 2-7L3 9h7z" },
+    { titre: "Commandes", desc: "Suivre les commandes", href: "/admin/commandes", actif: true, icone: "M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4zM3 6h18M16 10a4 4 0 0 1-8 0" },
     { titre: "Authentification", desc: "Pièces et puces NFC", href: "/admin/authentification", actif: false, icone: "M12 2l8 4v6c0 5-3.5 8-8 10-4.5-2-8-5-8-10V6z" },
     ...(peutGererAdmins
       ? [{ titre: "Gestion des accès", desc: "Collaborateurs et permissions", href: "/admin/administrateurs", actif: true, icone: "M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" }]
