@@ -179,10 +179,11 @@ export default function CommandesManager() {
                       <div>
                         <p className="text-[9px] tracking-[0.15em] uppercase text-[#1A2332]/40 mb-2">Articles</p>
                         <div className="space-y-1.5">
-                          {(c.articles || []).map((a, i) => (
+                          {(c.articles || []).map((a: any, i) => (
                             <div key={i} className="text-xs bg-white border border-[#1A2332]/10 p-2 flex justify-between">
                               <span className="text-[#1A2332]">
-                                Produit #{a.id} · {a.color} · Taille {a.size}
+                                {a.name || `Produit #${a.id}`} · {a.color} · Taille {a.size}
+                                {a.price ? ` · ${a.price} €` : ""}
                               </span>
                               <span className="font-semibold text-[#1A2332]">× {a.qty}</span>
                             </div>

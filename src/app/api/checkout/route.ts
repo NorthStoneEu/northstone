@@ -103,7 +103,20 @@ export async function POST(req: NextRequest) {
       // On garde une trace des articles pour le webhook (création commande + stock)
       metadata: {
         articles: JSON.stringify(
-          items.map((i) => ({ id: i.productId, color: i.color, size: i.size, qty: i.quantity }))
+          items.map((i) => {
+            const prod = produits?.find((p) => p.id === i.productId);
+            const imgCouleur = (prod?.images_by_color || {})[i.color];
+            const image = Array.isArray(imgCouleur) && imgCouleur[0] ? imgCouleur[0] : "";
+            return {
+              id: i.productId,
+              name: prod?.name || `Produit #${i.productId}`,
+              price: prod ? Number(prod.price) : 0,
+              color: i.color,
+              size: i.size,
+              qty: i.quantity,
+              image,
+            };
+          })
         ),
       },
     });

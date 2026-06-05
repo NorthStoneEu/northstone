@@ -295,7 +295,7 @@ export default function Header() {
                       Mon profil
                     </Link>
                     <Link
-                      href="/commandes"
+                      href="/compte/commandes"
                       onClick={() => setIsAccountMenuOpen(false)}
                       className="flex items-center gap-3 px-5 py-2.5 text-xs tracking-[0.15em] uppercase text-[#1A2332] hover:bg-[#B8985A]/10 hover:text-[#B8985A] transition-colors"
                     >
@@ -684,7 +684,7 @@ export default function Header() {
                   </div>
                   <div className="border-b border-[#1A2332]/10">
                     <Link
-                      href="/commandes"
+                      href="/compte/commandes"
                       className="flex items-center gap-3 py-3.5 text-sm text-[#1A2332] hover:text-[#B8985A] transition-colors duration-300"
                       onClick={() => setIsMenuOpen(false)}
                     >
