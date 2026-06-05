@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { stripe } from "@/lib/stripe";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
+import { auth } from "@clerk/nextjs/server";
 
 // Article reçu du panier — on ne fait CONFIANCE qu'à l'id, la couleur, la taille, la quantité.
 // Le prix et le nom sont re-vérifiés depuis la base (jamais le prix du client).
@@ -19,6 +20,7 @@ const PAYS_AUTORISES: any[] = [
 
 export async function POST(req: NextRequest) {
   try {
+    const { userId } = await auth();
     const body = await req.json();
     const items: ItemRecu[] = body.items || [];
 
@@ -53,6 +55,17 @@ export async function POST(req: NextRequest) {
       // Quantité valide
       const qte = Math.max(1, Math.floor(item.quantity || 1));
 
+// Vérifie le stock disponible pour cette taille
+      const stockDispo = Number((produit.stock_by_size || {})[item.size]) || 0;
+      if (stockDispo < qte) {
+        return NextResponse.json(
+          {
+            error: `Stock insuffisant pour "${produit.name}" (taille ${item.size}) : ${stockDispo} disponible(s), ${qte} demandé(s).`,
+          },
+          { status: 400 }
+        );
+      }
+
       // Image : première image de la couleur choisie, si c'est une URL absolue
       let images: string[] = [];
       const imagesCouleur = (produit.images_by_color || {})[item.color];
@@ -85,6 +98,8 @@ export async function POST(req: NextRequest) {
       locale: "fr",
       success_url: `${origin}/commande/succes?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/panier`,
+      // Lie la commande au compte client connecté (récupéré par le webhook)
+      client_reference_id: userId || undefined,
       // On garde une trace des articles pour le webhook (création commande + stock)
       metadata: {
         articles: JSON.stringify(
