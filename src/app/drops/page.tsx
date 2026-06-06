@@ -1,10 +1,10 @@
 import Link from "next/link";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import CountdownTimer from "@/components/CountdownTimer";
 import FadeIn from "@/components/FadeIn";
 import { supabase } from "@/lib/supabase";
 import BoutonPrevenuDrop from "@/components/BoutonPrevenuDrop";
+import DropAchat from "@/components/DropAchat";
 
 export const metadata = {
   title: "Drops — Northstone",
@@ -112,7 +112,7 @@ export default async function DropsPage() {
       <Header />
 
       {/* HERO */}
-      <section className="relative bg-[#0A0A0A] text-white lg:min-h-screen flex items-center px-4 sm:px-6 pt-20 sm:pt-24 pb-5 sm:pb-6 overflow-hidden">
+      <section className="relative bg-[#0A0A0A] text-white flex items-center px-4 sm:px-6 py-10 sm:py-14 overflow-hidden">
         <div className="relative z-10 max-w-7xl mx-auto w-full">
           <div className="grid grid-cols-2 gap-3 sm:gap-6 lg:gap-16 items-stretch lg:items-center">
             <FadeIn direction="left" duration={900} className="h-full">
@@ -151,24 +151,7 @@ export default async function DropsPage() {
                 </p>
 
                 {estActif ? (
-                  <>
-                    <div className="mb-3 sm:mb-8 lg:mb-10">
-                      <p className="text-[7px] sm:text-[10px] tracking-[0.2em] sm:tracking-[0.3em] uppercase text-white/40 mb-2 sm:mb-4">
-                        Ouverture des ventes — {formatDateExacte(dateOuverture)}
-                      </p>
-                      <CountdownTimer targetDate={dateOuverture} />
-                      <p className="text-[9px] sm:text-xs text-[#B8985A] mt-3 sm:mt-4 tracking-[0.1em]">
-                        Le {formatDateExacte(dateOuverture)}
-                      </p>
-                    </div>
-
-                    <div className="flex flex-col gap-2 sm:gap-3">
-                      <BoutonPrevenuDrop />
-                      <Link href="#comment" className="px-3 sm:px-8 py-2 sm:py-4 border border-white/30 text-white text-[8px] sm:text-xs tracking-[0.15em] sm:tracking-[0.2em] uppercase font-semibold hover:border-white hover:bg-white/5 transition-all text-center">
-                        Comment ça marche ?
-                      </Link>
-                    </div>
-                  </>
+                  <DropAchat dateOuverture={dateOuverture} dateExacte={formatDateExacte(dateOuverture)} />
                 ) : (
                   <>
                     <div className="mb-3 sm:mb-8 lg:mb-10">

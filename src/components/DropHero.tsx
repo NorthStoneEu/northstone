@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import CountdownTimer from "./CountdownTimer";
 import FadeIn from "./FadeIn";
@@ -16,6 +16,18 @@ type DropHeroProps = {
   nomCourt?: string;
 };
 
+// Formate une date ISO en "6 juin 2026 à 03h30"
+function formatDateExacte(iso: string): string {
+  try {
+    const d = new Date(iso);
+    const date = d.toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" });
+    const heure = d.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" }).replace(":", "h");
+    return `${date} à ${heure}`;
+  } catch {
+    return "";
+  }
+}
+
 export default function DropHero({
   sousTitre = "Drop 01 — La Genèse",
   titrePrincipal = "LA PIÈCE DE LA RAISON.",
@@ -26,6 +38,24 @@ export default function DropHero({
   nomCourt = "Drop 01",
 }: DropHeroProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [estOuvert, setEstOuvert] = useState(false);
+
+  // Détecte en temps réel si la date d'ouverture est atteinte
+  useEffect(() => {
+    const verifier = () => {
+      setEstOuvert(new Date().getTime() >= new Date(dateOuverture).getTime());
+    };
+    verifier();
+    const interval = setInterval(verifier, 1000);
+    return () => clearInterval(interval);
+  }, [dateOuverture]);
+
+  const commander = () => {
+    alert(
+      "L'achat de la pièce sera bientôt disponible.\n\n" +
+      "Le système de commande des drops est en cours de finalisation."
+    );
+  };
 
   // Découpe le titre en 2 lignes (1ère pleine, 2e estompée)
   const mots = titrePrincipal.trim().split(" ");
@@ -78,27 +108,57 @@ export default function DropHero({
                   {description}
                 </p>
 
-                <div className="mb-3 sm:mb-8 lg:mb-10">
-                  <p className="text-[7px] sm:text-[10px] tracking-[0.2em] sm:tracking-[0.3em] uppercase text-white/40 mb-2 sm:mb-4">
-                    Ouverture des ventes dans
-                  </p>
-                  <CountdownTimer targetDate={dateOuverture} />
-                </div>
+                {!estOuvert ? (
+                  <>
+                    <div className="mb-3 sm:mb-8 lg:mb-10">
+                      <p className="text-[7px] sm:text-[10px] tracking-[0.2em] sm:tracking-[0.3em] uppercase text-white/40 mb-2 sm:mb-4">
+                        Ouverture des ventes — {formatDateExacte(dateOuverture)}
+                      </p>
+                      <CountdownTimer targetDate={dateOuverture} />
+                    </div>
 
-                <div className="flex flex-col gap-2 sm:gap-3">
-                  <button
-                    onClick={() => setIsModalOpen(true)}
-                    className="px-3 sm:px-8 py-2 sm:py-4 bg-[#B8985A] text-[#0A0A0A] text-[8px] sm:text-xs tracking-[0.15em] sm:tracking-[0.2em] uppercase font-semibold hover:bg-[#D4B574] transition-colors text-center"
-                  >
-                    Être prévenu·e
-                  </button>
-                  <Link
-                    href="/drops"
-                    className="px-3 sm:px-8 py-2 sm:py-4 border border-white/30 text-white text-[8px] sm:text-xs tracking-[0.15em] sm:tracking-[0.2em] uppercase font-semibold hover:border-white hover:bg-white/5 transition-all text-center"
-                  >
-                    Voir le drop
-                  </Link>
-                </div>
+                    <div className="flex flex-col gap-2 sm:gap-3">
+                      <button
+                        onClick={() => setIsModalOpen(true)}
+                        className="px-3 sm:px-8 py-2 sm:py-4 bg-[#B8985A] text-[#0A0A0A] text-[8px] sm:text-xs tracking-[0.15em] sm:tracking-[0.2em] uppercase font-semibold hover:bg-[#D4B574] transition-colors text-center"
+                      >
+                        Être prévenu·e
+                      </button>
+                      <Link
+                        href="/drops"
+                        className="px-3 sm:px-8 py-2 sm:py-4 border border-white/30 text-white text-[8px] sm:text-xs tracking-[0.15em] sm:tracking-[0.2em] uppercase font-semibold hover:border-white hover:bg-white/5 transition-all text-center"
+                      >
+                        Comment ça marche ?
+                      </Link>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="mb-3 sm:mb-8 lg:mb-10">
+                      <div className="inline-flex items-center gap-2 border border-[#B8985A] bg-[#B8985A]/10 px-3 py-1.5 sm:px-5 sm:py-2.5">
+                        <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-[#B8985A] rounded-full animate-pulse" />
+                        <span className="text-[8px] sm:text-sm tracking-[0.2em] sm:tracking-[0.25em] uppercase text-[#B8985A] font-semibold">
+                          Le drop est ouvert
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col gap-2 sm:gap-3">
+                      <button
+                        onClick={commander}
+                        className="px-3 sm:px-8 py-2 sm:py-4 bg-[#B8985A] text-[#0A0A0A] text-[8px] sm:text-xs tracking-[0.15em] sm:tracking-[0.2em] uppercase font-bold hover:bg-[#D4B574] transition-colors text-center"
+                      >
+                        Commander ma pièce
+                      </button>
+                      <Link
+                        href="/drops"
+                        className="px-3 sm:px-8 py-2 sm:py-4 border border-white/30 text-white text-[8px] sm:text-xs tracking-[0.15em] sm:tracking-[0.2em] uppercase font-semibold hover:border-white hover:bg-white/5 transition-all text-center"
+                      >
+                        Voir le drop
+                      </Link>
+                    </div>
+                  </>
+                )}
               </div>
             </FadeIn>
           </div>
