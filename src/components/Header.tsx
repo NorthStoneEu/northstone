@@ -66,6 +66,7 @@ export default function Header() {
   const [estAdmin, setEstAdmin] = useState(false);
   const [estOwner, setEstOwner] = useState(false);
   const accountMenuRef = useRef<HTMLDivElement>(null);
+  const accountHoverTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Vérifier si l'utilisateur connecté a un accès admin
   useEffect(() => {
@@ -188,7 +189,14 @@ export default function Header() {
               <div
                 ref={accountMenuRef}
                 className="relative"
-                onMouseEnter={() => setHoveredMenu(null)}
+                onMouseEnter={() => {
+                  if (accountHoverTimer.current) clearTimeout(accountHoverTimer.current);
+                  setHoveredMenu(null);
+                  setIsAccountMenuOpen(true);
+                }}
+                onMouseLeave={() => {
+                  accountHoverTimer.current = setTimeout(() => setIsAccountMenuOpen(false), 150);
+                }}
               >
                 <button
                   onClick={() => setIsAccountMenuOpen(!isAccountMenuOpen)}
