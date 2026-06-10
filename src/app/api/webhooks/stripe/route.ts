@@ -73,12 +73,16 @@ export async function POST(req: NextRequest) {
       }
 
       // Récupère les articles depuis les metadata
-      let articles: { id: number; color: string; size: string; qty: number }[] = [];
+      let articles: any[] = [];
       try {
         articles = JSON.parse(session.metadata?.articles || "[]");
       } catch {
         articles = [];
       }
+
+      // Type de commande : 'drop' ou 'permanente' (défaut)
+      const typeCommande = session.metadata?.type === "drop" ? "drop" : "permanente";
+      const dropId = session.metadata?.drop_id || null;
 
       // Récupère le détail complet de la session (pour l'adresse, le client)
       const sessionComplete = await stripe.checkout.sessions.retrieve(session.id, {
@@ -99,6 +103,8 @@ export async function POST(req: NextRequest) {
         adresse_livraison: session.customer_details?.address || sessionComplete.collected_information?.shipping_details || null,
         stripe_session_id: session.id,
         stripe_payment_intent: typeof session.payment_intent === "string" ? session.payment_intent : null,
+        type: typeCommande,
+        drop_id: typeCommande === "drop" ? dropId : null,
       });
 
       if (errInsert) {
@@ -107,12 +113,16 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: "Erreur création commande" }, { status: 500 });
       }
 
-      // Décrémente le stock de chaque article
-      for (const art of articles) {
-        await decrementerStock(art.id, art.size, art.qty);
+      // Décrémente le stock UNIQUEMENT pour les commandes boutique
+      // (les drops n'ont pas de stock par taille — fabrication après commande)
+      if (typeCommande === "permanente") {
+        for (const art of articles) {
+          await decrementerStock(art.id, art.size, art.qty);
+        }
+        console.log(`✅ Commande ${numero} créée + stock décrémenté`);
+      } else {
+        console.log(`✅ Commande DROP ${numero} créée (pas de décrément stock)`);
       }
-
-      console.log(`✅ Commande ${numero} créée + stock décrémenté`);
     } catch (e: any) {
       console.error("⚠️ Erreur traitement webhook:", e);
       return NextResponse.json({ error: "Erreur traitement" }, { status: 500 });

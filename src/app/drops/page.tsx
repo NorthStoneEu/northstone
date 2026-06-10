@@ -1,5 +1,6 @@
 import Link from "next/link";
 import Header from "@/components/Header";
+import AnnouncementBar from "@/components/AnnouncementBar";
 import Footer from "@/components/Footer";
 import FadeIn from "@/components/FadeIn";
 import { supabase } from "@/lib/supabase";
@@ -25,6 +26,8 @@ type Drop = {
   release_date: string | null;
   total_pieces: number;
   total_winners: number;
+  prix: number;
+  tailles: string[];
   image_url: string;
   lots: Lot[];
   is_active: boolean;
@@ -56,7 +59,6 @@ const steps = [
   { number: "06", title: "Collection", description: "Pièce unique, jamais rééditée. Revente sécurisée." },
 ];
 
-// Formate une date ISO en "29 juin 2026 à 18h00"
 function formatDateExacte(iso: string): string {
   try {
     const d = new Date(iso);
@@ -110,9 +112,10 @@ export default async function DropsPage() {
   return (
     <>
       <Header />
+      <AnnouncementBar />
 
       {/* HERO */}
-      <section className="relative bg-[#0A0A0A] text-white flex items-center px-4 sm:px-6 py-10 sm:py-14 overflow-hidden">
+      <section className="relative bg-[#0A0A0A] text-white flex items-center px-4 sm:px-6 py-6 sm:py-10 overflow-hidden">
         <div className="relative z-10 max-w-7xl mx-auto w-full">
           <div className="grid grid-cols-2 gap-3 sm:gap-6 lg:gap-16 items-stretch lg:items-center">
             <FadeIn direction="left" duration={900} className="h-full">
@@ -151,7 +154,10 @@ export default async function DropsPage() {
                 </p>
 
                 {estActif ? (
-                  <DropAchat dateOuverture={dateOuverture} dateExacte={formatDateExacte(dateOuverture)} />
+                  <DropAchat
+                    dateOuverture={dateOuverture}
+                    dateExacte={formatDateExacte(dateOuverture)}
+                  />
                 ) : (
                   <>
                     <div className="mb-3 sm:mb-8 lg:mb-10">

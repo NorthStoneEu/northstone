@@ -1,41 +1,35 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import CountdownTimer from "./CountdownTimer";
 import BoutonPrevenuDrop from "./BoutonPrevenuDrop";
 
 type DropAchatProps = {
   dateOuverture: string;
-  dateExacte: string; // déjà formatée "15 novembre 2026 à 18h00"
-  lienComment?: string; // où mène "Comment ça marche" — défaut: ancre #comment de la page drop
-  compact?: boolean; // version resserrée (accueil) : masque la ligne de date redondante
+  dateExacte: string;
+  lienComment?: string;
+  compact?: boolean;
 };
 
-export default function DropAchat({ dateOuverture, dateExacte, lienComment = "#comment", compact = false }: DropAchatProps) {
-  // null = on ne sait pas encore (évite le flash au montage), true/false ensuite
+export default function DropAchat({
+  dateOuverture,
+  dateExacte,
+  lienComment = "#comment",
+  compact = false,
+}: DropAchatProps) {
   const [estOuvert, setEstOuvert] = useState<boolean | null>(null);
 
   useEffect(() => {
     const verifier = () => {
-      const maintenant = new Date().getTime();
-      const ouverture = new Date(dateOuverture).getTime();
-      setEstOuvert(maintenant >= ouverture);
+      setEstOuvert(new Date().getTime() >= new Date(dateOuverture).getTime());
     };
     verifier();
-    // Revérifie chaque seconde pour basculer automatiquement quand le countdown atteint zéro
     const interval = setInterval(verifier, 1000);
     return () => clearInterval(interval);
   }, [dateOuverture]);
 
-  const commander = () => {
-    alert(
-      "L'achat de la pièce sera bientôt disponible.\n\n" +
-      "Le système de commande des drops est en cours de finalisation.\n" +
-      "Inscrivez-vous pour être prévenu·e de l'ouverture."
-    );
-  };
-
-  // Tant qu'on ne sait pas (rendu serveur initial), on affiche le countdown par défaut
+  // ÉTAT : avant ouverture (countdown)
   if (estOuvert === null || !estOuvert) {
     return (
       <>
@@ -44,14 +38,16 @@ export default function DropAchat({ dateOuverture, dateExacte, lienComment = "#c
             Ouverture des ventes — {dateExacte}
           </p>
           <CountdownTimer targetDate={dateOuverture} />
-          <p className="text-[9px] sm:text-xs text-[#B8985A] mt-3 sm:mt-4 tracking-[0.1em]">
-            Le {dateExacte}
-          </p>
+          {!compact && (
+            <p className="text-[9px] sm:text-xs text-[#B8985A] mt-3 sm:mt-4 tracking-[0.1em]">
+              Le {dateExacte}
+            </p>
+          )}
         </div>
 
         <div className="flex flex-col gap-2 sm:gap-3">
           <BoutonPrevenuDrop />
-          <a href="#comment" className="px-3 sm:px-8 py-2 sm:py-4 border border-white/30 text-white text-[8px] sm:text-xs tracking-[0.15em] sm:tracking-[0.2em] uppercase font-semibold hover:border-white hover:bg-white/5 transition-all text-center">
+          <a href={lienComment} className="px-3 sm:px-8 py-2 sm:py-4 border border-white/30 text-white text-[8px] sm:text-xs tracking-[0.15em] sm:tracking-[0.2em] uppercase font-semibold hover:border-white hover:bg-white/5 transition-all text-center">
             Comment ça marche ?
           </a>
         </div>
@@ -59,7 +55,7 @@ export default function DropAchat({ dateOuverture, dateExacte, lienComment = "#c
     );
   }
 
-  // DROP OUVERT
+  // ÉTAT : drop ouvert
   return (
     <>
       <div className="mb-3 sm:mb-8 lg:mb-10">
@@ -75,13 +71,13 @@ export default function DropAchat({ dateOuverture, dateExacte, lienComment = "#c
       </div>
 
       <div className="flex flex-col gap-2 sm:gap-3">
-        <button
-          onClick={commander}
+        <Link
+          href="/drops/commander"
           className="px-3 sm:px-8 py-2 sm:py-4 bg-[#B8985A] text-[#0A0A0A] text-[8px] sm:text-xs tracking-[0.15em] sm:tracking-[0.2em] uppercase font-bold hover:bg-[#D4B574] transition-colors text-center"
         >
           Commander ma pièce
-        </button>
-        <a href="#comment" className="px-3 sm:px-8 py-2 sm:py-4 border border-white/30 text-white text-[8px] sm:text-xs tracking-[0.15em] sm:tracking-[0.2em] uppercase font-semibold hover:border-white hover:bg-white/5 transition-all text-center">
+        </Link>
+        <a href={lienComment} className="px-3 sm:px-8 py-2 sm:py-4 border border-white/30 text-white text-[8px] sm:text-xs tracking-[0.15em] sm:tracking-[0.2em] uppercase font-semibold hover:border-white hover:bg-white/5 transition-all text-center">
           Comment ça marche ?
         </a>
       </div>

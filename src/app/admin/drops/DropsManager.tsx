@@ -14,6 +14,8 @@ type Drop = {
   release_date: string | null;
   total_pieces: number;
   total_winners: number;
+  prix: number; // en centimes
+  tailles: string[]; // tailles proposées (sans stock — fabrication après commande)
   image_url: string;
   lots: Lot[];
   is_active: boolean;
@@ -62,6 +64,8 @@ export default function DropsManager() {
     release_date: null,
     total_pieces: 0,
     total_winners: 0,
+    prix: 8000,
+    tailles: [],
     image_url: "",
     lots: [],
     is_active: false,
@@ -87,6 +91,29 @@ export default function DropsManager() {
 
   const retirerLot = (index: number) => {
     setEdition((prev) => (prev ? { ...prev, lots: prev.lots.filter((_, i) => i !== index) } : prev));
+  };
+
+  // Gestion des tailles proposées (sans stock — fabrication après commande)
+  const retirerTaille = (taille: string) => {
+    setEdition((prev) => {
+      if (!prev) return prev;
+      return { ...prev, tailles: prev.tailles.filter((t) => t !== taille) };
+    });
+  };
+
+  const ajouterTaille = () => {
+    const taille = prompt("Nom de la taille (ex : XS, S, M, L, XL) :");
+    if (!taille) return;
+    const t = taille.trim().toUpperCase();
+    if (!t) return;
+    setEdition((prev) => {
+      if (!prev) return prev;
+      if (prev.tailles.includes(t)) {
+        alert("Cette taille existe déjà.");
+        return prev;
+      }
+      return { ...prev, tailles: [...prev.tailles, t] };
+    });
   };
 
   // Upload d'image vers Supabase (même mécanique que les produits)
@@ -263,6 +290,48 @@ export default function DropsManager() {
               </div>
             </div>
 
+            {/* Prix de la pièce */}
+            <div>
+              <label className={labelClass}>Prix de la pièce (en euros)</label>
+              <div className="relative w-40">
+                <input
+                  type="number"
+                  className={inputClass}
+                  value={edition.prix / 100}
+                  onChange={(e) => set("prix", Math.round(Number(e.target.value) * 100))}
+                  step="0.01"
+                  min="0"
+                />
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-[#1A2332]/50">€</span>
+              </div>
+              <p className="text-[11px] text-[#1A2332]/45 mt-1.5">Prix unique pour chaque pièce du drop.</p>
+            </div>
+
+            {/* Tailles proposées */}
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <label className={labelClass} style={{ marginBottom: 0 }}>Tailles proposées</label>
+                <button onClick={ajouterTaille} className="text-[10px] tracking-[0.15em] uppercase text-[#B8985A] border border-[#B8985A]/40 px-3 py-1.5 hover:bg-[#B8985A]/10" style={{ background: "none", cursor: "pointer" }}>
+                  + Ajouter une taille
+                </button>
+              </div>
+              {edition.tailles.length === 0 ? (
+                <p className="text-xs text-[#1A2332]/40 italic">Aucune taille. Ajoutez-en avec le bouton ci-dessus.</p>
+              ) : (
+                <div className="flex flex-wrap gap-2">
+                  {edition.tailles.map((taille) => (
+                    <span key={taille} className="inline-flex items-center gap-2 border border-[#1A2332]/20 px-3 py-1.5 text-sm text-[#1A2332]">
+                      {taille}
+                      <button onClick={() => retirerTaille(taille)} className="text-red-500 font-bold" style={{ cursor: "pointer", background: "none" }}>×</button>
+                    </span>
+                  ))}
+                </div>
+              )}
+              <p className="text-[11px] text-[#1A2332]/45 mt-2">
+                Le client choisira sa taille. Les pièces sont fabriquées après le drop selon les commandes (limite totale : {edition.total_pieces} pièces).
+              </p>
+            </div>
+
             {/* Image avec upload */}
             <div>
               <label className={labelClass}>Image du drop</label>
@@ -374,7 +443,7 @@ export default function DropsManager() {
                       </div>
                       <div className="flex gap-2 flex-shrink-0">
                         <button
-                          onClick={() => setEdition({ ...d, lots: Array.isArray(d.lots) ? d.lots : [] })}
+                          onClick={() => setEdition({ ...d, lots: Array.isArray(d.lots) ? d.lots : [], tailles: Array.isArray(d.tailles) ? d.tailles : [], prix: d.prix || 8000 })}
                           className="px-3 py-1.5 text-[10px] tracking-[0.15em] uppercase text-[#1A2332] border border-[#1A2332]/20 hover:border-[#1A2332] transition-colors"
                           style={{ background: "none", cursor: "pointer" }}
                         >

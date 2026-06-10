@@ -50,13 +50,6 @@ export default function DropHero({
     return () => clearInterval(interval);
   }, [dateOuverture]);
 
-  const commander = () => {
-    alert(
-      "L'achat de la pièce sera bientôt disponible.\n\n" +
-      "Le système de commande des drops est en cours de finalisation."
-    );
-  };
-
   // Découpe le titre en 2 lignes (1ère pleine, 2e estompée)
   const mots = titrePrincipal.trim().split(" ");
   const ligne2 = mots.length > 1 ? mots.slice(-2).join(" ") : "";
@@ -64,7 +57,7 @@ export default function DropHero({
 
   return (
     <>
-      <section className="relative bg-[#0A0A0A] text-white flex items-center px-4 sm:px-6 py-10 sm:py-14 overflow-hidden border-b border-[#B8985A]/30">
+      <section className="relative bg-[#0A0A0A] text-white flex items-center px-4 sm:px-6 py-6 sm:py-10 overflow-hidden border-b border-[#B8985A]/30">
         <div className="relative z-10 max-w-7xl mx-auto w-full">
           <div className="grid grid-cols-2 gap-3 sm:gap-6 lg:gap-16 items-stretch lg:items-center">
             {/* Colonne gauche : Image */}
@@ -144,12 +137,12 @@ export default function DropHero({
                     </div>
 
                     <div className="flex flex-col gap-2 sm:gap-3">
-                      <button
-                        onClick={commander}
+                      <Link
+                        href="/drops/commander"
                         className="px-3 sm:px-8 py-2 sm:py-4 bg-[#B8985A] text-[#0A0A0A] text-[8px] sm:text-xs tracking-[0.15em] sm:tracking-[0.2em] uppercase font-bold hover:bg-[#D4B574] transition-colors text-center"
                       >
                         Commander ma pièce
-                      </button>
+                      </Link>
                       <Link
                         href="/drops"
                         className="px-3 sm:px-8 py-2 sm:py-4 border border-white/30 text-white text-[8px] sm:text-xs tracking-[0.15em] sm:tracking-[0.2em] uppercase font-semibold hover:border-white hover:bg-white/5 transition-all text-center"

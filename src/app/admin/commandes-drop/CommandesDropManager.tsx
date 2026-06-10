@@ -137,13 +137,19 @@ export default function CommandesDropManager() {
           </div>
           <div className="flex gap-5">
             <div style={{ textAlign: "right" }}>
-              <p style={{ fontSize: "22px", fontWeight: 800, color: "#1A2332", lineHeight: 1 }}>{commandes.length}</p>
+              <p style={{ fontSize: "22px", fontWeight: 800, color: "#1A2332", lineHeight: 1 }}>{compteur("payee") + compteur("en_preparation") + compteur("expediee") + compteur("livree")}</p>
               <p style={{ fontSize: "10px", letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(26,35,50,0.5)", marginTop: "3px" }}>Pièces vendues</p>
             </div>
             <div style={{ textAlign: "right" }}>
               <p style={{ fontSize: "22px", fontWeight: 800, color: "#8a6d35", lineHeight: 1 }}>{compteur("payee") + compteur("en_preparation")}</p>
               <p style={{ fontSize: "10px", letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(26,35,50,0.5)", marginTop: "3px" }}>À expédier</p>
             </div>
+            {(compteur("annulee") + compteur("remboursee")) > 0 && (
+              <div style={{ textAlign: "right" }}>
+                <p style={{ fontSize: "22px", fontWeight: 800, color: "#A03030", lineHeight: 1 }}>{compteur("annulee") + compteur("remboursee")}</p>
+                <p style={{ fontSize: "10px", letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(26,35,50,0.5)", marginTop: "3px" }}>Annulées</p>
+              </div>
+            )}
           </div>
         </div>
 
