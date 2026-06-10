@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { stripe } from "@/lib/stripe";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import Stripe from "stripe";
+import { envoyerEmailConfirmation } from "@/lib/emails";
 
 // Génère un numéro de commande lisible : NS-2026-XXXX
 async function genererNumero(): Promise<string> {
@@ -123,6 +124,17 @@ export async function POST(req: NextRequest) {
       } else {
         console.log(`✅ Commande DROP ${numero} créée (pas de décrément stock)`);
       }
+
+      // Envoi de l'email de confirmation (n'interrompt pas le webhook si erreur)
+      await envoyerEmailConfirmation({
+        numero,
+        emailClient: session.customer_details?.email || session.customer_email || "",
+        articles,
+        montantTotal: session.amount_total || 0,
+        devise: session.currency || "eur",
+        adresseLivraison: session.customer_details?.address || sessionComplete.collected_information?.shipping_details || null,
+        type: typeCommande,
+      });
     } catch (e: any) {
       console.error("⚠️ Erreur traitement webhook:", e);
       return NextResponse.json({ error: "Erreur traitement" }, { status: 500 });

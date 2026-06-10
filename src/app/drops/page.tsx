@@ -114,6 +114,8 @@ export default async function DropsPage() {
       <Header />
       <AnnouncementBar />
 
+      <div dangerouslySetInnerHTML={{ __html: "<!-- eclat I : NORD -->" }} />
+
       {/* HERO */}
       <section className="relative bg-[#0A0A0A] text-white flex items-center px-4 sm:px-6 py-6 sm:py-10 overflow-hidden">
         <div className="relative z-10 max-w-7xl mx-auto w-full">
