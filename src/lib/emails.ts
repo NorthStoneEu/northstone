@@ -54,6 +54,7 @@ function lignesAdresse(adr: any): string[] {
 function construireHTML(d: DonneesCommande): string {
   const estDrop = d.type === "drop";
   const adresse = lignesAdresse(d.adresseLivraison);
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 
   const lignesArticles = (d.articles || [])
     .map((a) => {
@@ -143,7 +144,7 @@ function construireHTML(d: DonneesCommande): string {
           <!-- Bouton suivi -->
           <tr>
             <td style="padding:32px 32px;text-align:center;">
-              <a href="https://northstone.fr/compte/commandes" style="display:inline-block;background-color:${C.noir};color:${C.or};text-decoration:none;font-size:11px;letter-spacing:0.2em;text-transform:uppercase;font-weight:700;padding:15px 36px;">Suivre ma commande</a>
+              <a href="${baseUrl}/compte/commandes/${encodeURIComponent(d.numero)}" style="display:inline-block;background-color:${C.noir};color:${C.or};text-decoration:none;font-size:11px;letter-spacing:0.2em;text-transform:uppercase;font-weight:700;padding:15px 36px;">Suivre ma commande</a>
             </td>
           </tr>
 
